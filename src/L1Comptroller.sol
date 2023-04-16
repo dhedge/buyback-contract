@@ -8,6 +8,9 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 
+// TODO: Remove this line during deployment.
+import "forge-std/console.sol";
+
 /// @title L1 comptroller contract for token buy backs.
 /// @notice Contract to burn a token and claim another one on L2.
 /// @author dHEDGE
@@ -134,7 +137,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         crossDomainMessenger.sendMessage(
             L2Comptroller,
             abi.encodeWithSignature(
-                "buyBackOnL1(address,address,uint)",
+                "buyBackFromL1(address,address,uint)",
                 depositor,
                 receiver,
                 totalAmount
@@ -154,7 +157,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @dev This function needs to be called after deployment of both the contracts.
     /// @param newL2Comptroller Address of the newly deployed L2 comptroller.
     // Question: Should this be allowed to be called only once?
-    function setL2Comptroler(address newL2Comptroller) external onlyOwner {
+    function setL2Comptroller(address newL2Comptroller) external onlyOwner {
         if (newL2Comptroller == address(0)) revert ZeroAddress();
 
         L2Comptroller = newL2Comptroller;

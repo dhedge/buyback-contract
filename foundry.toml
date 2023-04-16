@@ -4,9 +4,11 @@ out = 'out'
 libs = ['lib']
 
 [rpc_endpoints]
-polygon = "${POLYGON_RPC_URL}"
+ethereum = "${ETHEREUM_RPC_URL}"
+optimism = "${OPTIMISM_RPC_URL}"
 
 [etherscan]
-polygon = { key = "${POLYGONSCAN_API_KEY}" }
+ethereum = { key = "${ETHEREUM_API_KEY}" }
+optimism = { key = "${OPTIMISM_API_KEY}" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

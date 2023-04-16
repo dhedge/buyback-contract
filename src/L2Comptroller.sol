@@ -9,10 +9,12 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
 
+// TODO: Remove this line during deployment.
+import "forge-std/console.sol";
+
 /// @title L2 comptroller contract for token buy backs.
+/// @notice This contract supports buyback claims raised from the L1 comptroller.
 /// @author dHEDGE
-/// @dev This contract is only useful if paired with the L1 comptroller.
-///      Users shouldn't interact with this contract directly.
 contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -94,6 +96,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function initialize(
+        ICrossDomainMessenger _crossDomainMessenger,
         IERC20Upgradeable _tokenToBurn,
         IPoolLogic _tokenToBuy,
         address _burnMultiSig,
@@ -103,7 +106,8 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         if (
             address(_tokenToBurn) == address(0) ||
             address(_tokenToBuy) == address(0) ||
-            _burnMultiSig == address(0)
+            _burnMultiSig == address(0) ||
+            address(_crossDomainMessenger) == address(0)
         ) revert ZeroAddress();
 
         if (
@@ -120,6 +124,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
         tokenToBurn = _tokenToBurn;
         tokenToBuy = _tokenToBuy;
+        crossDomainMessenger = _crossDomainMessenger;
         burnMultiSig = _burnMultiSig;
         exchangePrice = _exchangePrice;
         maxTokenPriceDrop = _maxTokenPriceDrop;
@@ -127,7 +132,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 tokenPrice = _tokenToBuy.tokenPrice();
 
         // If the token price is 0, revert the transaction as the pool isn't ready.
-        if (lastTokenToBuyPrice == 0) revert ZeroTokenPrice();
+        if (tokenPrice == 0) revert ZeroTokenPrice();
 
         // Update the token price of the token to be bought.
         lastTokenToBuyPrice = tokenPrice;
@@ -164,7 +169,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         emit TokensBoughtOnL2(msg.sender, receiver, amount, buyTokenAmount);
     }
 
-    function buyBackOnL1(
+    function buyBackFromL1(
         address l1Depositor,
         address receiver,
         uint256 totalAmountBurntOnL1
