@@ -17,7 +17,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
     event L2ComptrollerSet(address newL2Comptroller);
     event CrossChainGasLimitModified(uint256 newCrossChainGasLimit);
-    event Withdrawal(address indexed token, uint256 amount);
+    event EmergencyWithdrawal(address indexed token, uint256 amount);
     event TokensBurned(address indexed depositor, uint256 burnTokenAmount);
     event TokenClaimInitiated(
         address indexed depositor,
@@ -181,7 +181,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // the transfer will revert.
         tokenToWithdraw.safeTransfer(owner(), amount);
 
-        emit Withdrawal(address(tokenToWithdraw), amount);
+        emit EmergencyWithdrawal(token, amount);
     }
 
     /// @notice Function to set the cross chain calls gas limit.
@@ -200,12 +200,12 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to pause the critical functions in this contract.
     /// @dev This function won't make any state changes if already paused.
     function pause() external onlyOwner {
-        if (!paused()) _pause();
+        _pause();
     }
 
     /// @notice Function to unpause the critical functions in this contract.
     /// @dev This function won't make any state changes if already unpaused.
     function unpause() external onlyOwner {
-        if (paused()) _unpause();
+        _unpause();
     }
 }

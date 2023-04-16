@@ -19,7 +19,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event L1ComptrollerSet(address newL1Comptroller);
     event BuyTokenPriceUpdated(uint256 updatedBuyTokenPrice);
     event ModifiedMaxTokenPriceDrop(uint256 newMaxTokenPriceDrop);
-    event EmergenWithdrawal(address indexed token, uint256 amount);
+    event EmergencyWithdrawal(address indexed token, uint256 amount);
     event TokensBoughtOnL1(
         address indexed depositor,
         address indexed receiver,
@@ -296,18 +296,18 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // the transfer will revert.
         tokenToWithdraw.safeTransfer(owner(), amount);
 
-        emit EmergenWithdrawal(address(tokenToWithdraw), amount);
+        emit EmergencyWithdrawal(token, amount);
     }
 
     /// @notice Function to pause the critical functions in this contract.
     /// @dev This function won't make any state changes if already paused.
     function pause() external onlyOwner {
-        if (!paused()) _pause();
+        _pause();
     }
 
     /// @notice Function to unpause the critical functions in this contract.
     /// @dev This function won't make any state changes if already unpaused.
     function unpause() external onlyOwner {
-        if (paused()) _unpause();
+        _unpause();
     }
 }
