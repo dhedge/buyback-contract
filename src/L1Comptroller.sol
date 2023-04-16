@@ -15,14 +15,19 @@ import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    event TokensBurned(
+    event L2ComptrollerSet(address newL2Comptroller);
+    event CrossChainGasLimitModified(uint256 newCrossChainGasLimit);
+    event Withdrawal(address indexed token, uint256 amount);
+    event TokensBurned(address indexed depositor, uint256 burnTokenAmount);
+    event TokenClaimInitiated(
         address indexed depositor,
+        address indexed receiver,
         uint256 burnTokenAmount
     );
-    event L2ComptrollerSet(address newL2Comptroller);
 
     error ZeroAddress();
     error L2ComptrollerNotSet();
+    error ZeroValue();
 
     /// @notice Token to burn.
     /// @dev Should be a token which implements ERC20Burnable methods. MTA token does so in our case.
@@ -35,11 +40,20 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @dev Has to be set after deployment of both the contracts.
     address public L2Comptroller;
 
+    /// @dev The gas limit to be used to call the Optimism Cross Domain Messenger contract.
+    uint32 private crossChainCallGasLimit;
+
     /// @notice Stores cumulative amount of tokens burnt by an address.
     /// @dev We don't need to use order IDs as the difference of `totalAmount` (burnt) on L1
     ///      and `totalAmount` (claimed) on L2 gives us the amount of buy tokens tokens yet to be claimed.
     /// @dev The `totalAmount` for an address would/should NEVER decrease.
     mapping(address depositor => uint256 totalAmount) public burntAmountOf;
+
+    /// @dev Modifier to check that L2Comptroller address has been set or not.
+    modifier whenL2ComptrollerSet() {
+        if (L2Comptroller == address(0)) revert L2ComptrollerNotSet();
+        _;
+    }
 
     /// @dev To prevent the implementation contract from being used, we invoke the _disableInitializers
     /// function in the constructor to automatically lock it when it is deployed.
@@ -48,45 +62,104 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(ICrossDomainMessenger _crossDomainMessenger, IERC20Burnable _tokenToBurn) external initializer {
-        if (address(_tokenToBurn) == address(0)) revert ZeroAddress();
+    function initialize(
+        ICrossDomainMessenger _crossDomainMessenger,
+        IERC20Burnable _tokenToBurn,
+        uint32 _crossChainCallGasLimit
+    ) external initializer {
+        if (
+            address(_tokenToBurn) == address(0) ||
+            address(_crossDomainMessenger) == address(0)
+        ) revert ZeroAddress();
 
         __Ownable_init();
         __Pausable_init();
 
         crossDomainMessenger = _crossDomainMessenger;
         tokenToBurn = _tokenToBurn;
+        crossChainCallGasLimit = _crossChainCallGasLimit;
     }
 
     /// @notice Function to burn `amount` of tokens and create an order against it.
     /// @param amount Amount of `tokenToBurn` to be burnt and exchanged.
     function buyBackOnL2(
         uint256 amount
-    ) external whenNotPaused {
-        if (L2Comptroller == address(0)) revert L2ComptrollerNotSet();
+    ) external whenNotPaused whenL2ComptrollerSet {
+        _burnAndUpdate(msg.sender, amount);
+        _claimOnL2(msg.sender, msg.sender);
+    }
 
+    /// @notice Function to burn `amount` of tokens and claim against it on L2.
+    /// @param amount Amount of `tokenToBurn` to be burnt and exchanged.
+    /// @param receiver Address of the account which will receive the buy tokens.
+    function buyBackOnL2AndTransfer(
+        address receiver,
+        uint256 amount
+    ) external whenNotPaused whenL2ComptrollerSet {
+        _burnAndUpdate(msg.sender, amount);
+        _claimOnL2(msg.sender, receiver);
+    }
+
+    /// @notice Function to initiate a claim on L2 after burning of `tokenToBurn`.
+    /// @dev Can be used to trigger a claim on L2 is cross chain call fails for some reason.
+    ///      after calling `buyBackOnL2`.
+    function claimOnL2() external whenNotPaused {
+        _claimOnL2(msg.sender, msg.sender);
+    }
+
+    /// @notice Function to initiate a claim on L2 after burning of `tokenToBurn` and transfer the claimed
+    ///         tokens to another address.
+    /// @dev Can be used to trigger a claim on L2 is cross chain call fails for some reason.
+    ///      after calling `buyBackOnL2`.
+    function claimOnL2AndTransfer(address receiver) external whenNotPaused {
+        _claimOnL2(msg.sender, receiver);
+    }
+
+    function _burnAndUpdate(
+        address depositor,
+        uint256 amount
+    ) internal {
         // Burning the `amount` tokens held by the user without transferring them to
         // this contract first. This functionality is provided by the `ERC20Burnable` contract.
-        // TODO: Explore if any low level calls are required to verify nothing failed silently.
-        tokenToBurn.burnFrom(msg.sender, amount);
+        tokenToBurn.burnFrom(depositor, amount);
 
-        burntAmountOf[msg.sender] += amount;
-
-        // TODO: Perform a cross contract call to the L2Comptroller to give buy token to
-        // the caller.
-
-        emit TokensBurned(msg.sender, amount);
+        burntAmountOf[depositor] += amount;
     }
+
+    // Question: Should a check of L2Comptroller address be made?
+    function _claimOnL2(address depositor, address receiver) internal {
+        uint256 totalAmount = burntAmountOf[msg.sender];
+
+        // Send a cross chain message to `L2Comptroller` for releasing the buy tokens.
+        crossDomainMessenger.sendMessage(
+            L2Comptroller,
+            abi.encodeWithSignature(
+                "buyBackOnL1(address,address,uint)",
+                depositor,
+                receiver,
+                totalAmount
+            ),
+            crossChainCallGasLimit
+        );
+
+        emit TokenClaimInitiated(depositor, receiver, totalAmount);
+    }
+
 
     /////////////////////////////////////////////
     //             Owner Functions             //
     /////////////////////////////////////////////
 
+    /// @notice Function to set the L2 comptroller address deployed on Optimism.
+    /// @dev This function needs to be called after deployment of both the contracts.
+    /// @param newL2Comptroller Address of the newly deployed L2 comptroller.
     // Question: Should this be allowed to be called only once?
     function setL2Comptroler(address newL2Comptroller) external onlyOwner {
-        if(newL2Comptroller == address(0)) revert ZeroAddress();
+        if (newL2Comptroller == address(0)) revert ZeroAddress();
 
         L2Comptroller = newL2Comptroller;
+
+        emit L2ComptrollerSet(newL2Comptroller);
     }
 
     /// @notice Function to withdraw tokens in an emergency situation.
@@ -107,6 +180,21 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // NOTE: If the balanceOf(address(this)) < `amount` < type(uint256).max then
         // the transfer will revert.
         tokenToWithdraw.safeTransfer(owner(), amount);
+
+        emit Withdrawal(address(tokenToWithdraw), amount);
+    }
+
+    /// @notice Function to set the cross chain calls gas limit.
+    /// @dev Optimism allows, upto a certain limit, free execution gas units on L2.
+    ///      This value is currently 1.92 million gas units.
+    function setCrossChainGasLimit(
+        uint32 newCrossChainGasLimit
+    ) external onlyOwner {
+        if (newCrossChainGasLimit == 0) revert ZeroValue();
+
+        crossChainCallGasLimit = newCrossChainGasLimit;
+
+        emit CrossChainGasLimitModified(newCrossChainGasLimit);
     }
 
     /// @notice Function to pause the critical functions in this contract.

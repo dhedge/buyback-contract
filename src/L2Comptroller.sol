@@ -72,7 +72,6 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @dev Expecting 18 decimals for more precision.
     uint256 public exchangePrice;
 
-    // TODO: Explore if setting a minimum price in the constructor makes sense.
     // Probably by querying the pool price in the constructor and setting the return value
     // as the `lastTokenToBuyPrice`.
     /// @notice The token price of `tokenToBuy` last time it was updated.
@@ -180,13 +179,13 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 totalAmountClaimed = l1BurntAmountOf[l1Depositor];
 
         // If the tokens have been claimed already then, revert the transaction.
-        // This is necessary to be checked as the L1Comptroller doesn't know if the claims
+        // This check is necessary as the L1Comptroller doesn't know if the claims
         // have succeeded on L2 or not and hence can't revert the transaction on L1 itself.
         if (totalAmountClaimed == totalAmountBurntOnL1)
             revert BuyTokenAlreadyClaimed(l1Depositor, totalAmountBurntOnL1);
 
         // The cumulative token amount burnt and claimed against on L2 should never be less than
-        // what's been burnt on L1. This indicates some serious issues exist.
+        // what's been burnt on L1. This indicates some serious issues.
         assert(totalAmountClaimed < totalAmountBurntOnL1);
 
         // The difference of both these variables tell us the actual tokens burnt in the latest transaction
@@ -243,12 +242,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         );
 
         // Updating the buy token price for future checks.
-        // TODO: Explore if an update should take place if there is a price deviation within
-        // a pre-defined threshold.
         if (lastTokenToBuyPrice < tokenToBuyPrice) {
             lastTokenToBuyPrice = tokenToBuyPrice;
 
-            // TODO: Explore if this event emission is required or not.
+            // QUESTION: Does this event emission makes sense to be included?
             emit BuyTokenPriceUpdated(tokenToBuyPrice);
         }
     }
@@ -257,12 +254,16 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     //             Owner Functions             //
     /////////////////////////////////////////////
 
+    /// @notice Function to set the Lq comptroller address of the comptroller deployed on Ethereum.
+    /// @dev This function needs to be called after deployment of both the contracts.
+    /// @param newL1Comptroller Address of the newly deployed L2 comptroller.
+    // Question: Should this be allowed to be called only once?
     function setL1Comptroller(address newL1Comptroller) external onlyOwner {
         if (newL1Comptroller == address(0)) revert ZeroAddress();
 
         L1Comptroller = newL1Comptroller;
 
-        // Question: Do we really need to emit this? Ideally, this function should be used
+        // Question: Do we really need to emit this? Ideally, this function would be used
         // only once.
         emit L1ComptrollerSet(newL1Comptroller);
     }
@@ -279,7 +280,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to withdraw tokens in an emergency situation.
     /// @param token Address of the token to be withdrawn.
     /// @param amount Amount of the `token` to be removed.
-    // TODO: Rug pull protection?
+    // Question: Rug pull protection?
     function emergencyWithdraw(
         address token,
         uint256 amount
