@@ -6,7 +6,7 @@ Buyback and burn contract for MTA token. Allows a holder of MTA on Ethereum (L1)
 The naming convention we follow for writing tests are detailed below:
 - File name represents the contract being tested specifically. For example, the test contract file name `L1Comptroller.t.sol` represents the L1Comptroller contract's tests.
 - Contract names represent the exact function to be tested. For example, a contract named `BuyBackOnL2` represents tests for the function `buyBackOnL2` in the `L1Comptroller.sol` as per our previous example.
-- The test names start with 'test' followed by the function name being tested, followed by the test case description in capitalized camel case. For example, if you want to write the test for `buyBackOnL2` to check whether the `L1Comptroller` is burning tokens correctly you would write it as `test_buyBackOnL2_ShouldBurnTokensCorrectly`. Notice the camel case of the test description.
+- The test names start with 'test' followed by the test case description in capitalized camel case. For example, if you want to write the test for `buyBackOnL2` to check whether the `L1Comptroller` is burning tokens correctly you would write it as `test_ShouldBurnTokensCorrectly` in the contract `BuyBackOnL2` in the test file `L1Comptroller.t.sol`. Notice the camel case of the test description.
 - If ever in doubt, refer the Foundry [docs](https://book.getfoundry.sh/tutorials/best-practices#tests).
 
 ### How to run tests?
