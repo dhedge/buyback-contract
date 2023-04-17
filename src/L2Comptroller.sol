@@ -9,7 +9,7 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
 
-// TODO: Remove this line during deployment.
+// TODO: Remove this line before deployment.
 import "forge-std/console.sol";
 
 /// @title L2 comptroller contract for token buy backs.

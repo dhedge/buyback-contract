@@ -8,7 +8,7 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 
-// TODO: Remove this line during deployment.
+// TODO: Remove this line before deployment.
 import "forge-std/console.sol";
 
 /// @title L1 comptroller contract for token buy backs.
@@ -29,8 +29,9 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     );
 
     error ZeroAddress();
-    error L2ComptrollerNotSet();
     error ZeroValue();
+    error InvalidClaim();
+    error L2ComptrollerNotSet();
 
     /// @notice Token to burn.
     /// @dev Should be a token which implements ERC20Burnable methods. MTA token does so in our case.
@@ -132,6 +133,10 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     // Question: Should a check of L2Comptroller address be made?
     function _claimOnL2(address depositor, address receiver) internal {
         uint256 totalAmount = burntAmountOf[msg.sender];
+
+        // This check isn't necessary as this case is handled in the L2Comptroller anyway 
+        // but we don't want the user calling this function when they never initiated a buy back.
+        if(totalAmount == 0) revert InvalidClaim();
 
         // Send a cross chain message to `L2Comptroller` for releasing the buy tokens.
         crossDomainMessenger.sendMessage(
