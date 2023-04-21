@@ -240,7 +240,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // what's been burnt on L1. This indicates some serious issues.
         assert(totalAmountClaimed < totalAmountBurntOnL1);
 
-        // The difference of both these variables tell us the claimable token amount in `tokenToBurn`
+        // The difference of both these variables tells us the claimable token amount in `tokenToBurn`
         // denomination.
         uint256 burnTokenAmount = totalAmountBurntOnL1 - totalAmountClaimed;
 
@@ -254,43 +254,6 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 buyTokenAmount = this._buyBack(msg.sender, receiver, amount);
 
         emit TokensBoughtOnL2(msg.sender, receiver, amount, buyTokenAmount);
-    }
-
-    /// @notice Function to get the amount of `tokenToBurn` that should be burned to
-    ///         receive `amount` of `tokenToBuy`.
-    /// @param amount `tokenToBuy` amount to be converted.
-    /// @return burnTokenAmount Amount converted to `tokenToBurn`.
-    function convertToTokenToBurn(
-        uint256 amount
-    ) public view returns (uint256 burnTokenAmount) {
-        burnTokenAmount = (amount * tokenToBuy.tokenPrice()) / exchangePrice;
-    }
-
-    /// @notice Function to get the amount of `tokenToBuy` that can be claimed by burning `amount`
-    ///         of `tokenToBurn`.
-    /// @param amount `tokenToBurn` amount to be converted.
-    /// @return buyTokenAmount Amount converted to `tokenToBuy`.
-    function convertToTokenToBuy(
-        uint256 amount
-    ) public view returns (uint256 buyTokenAmount) {
-        buyTokenAmount = (amount * exchangePrice) / tokenToBuy.tokenPrice();
-    }
-
-    /// @notice Function to get the max amount of `tokenToBurn` that can be burned and claimable
-    ///         for `tokenToBuy`.
-    /// @dev This function allows us to make assumptions about the success of the claim function.
-    /// @dev This contract is expected to be containing a limited amount of `tokenToBuy` to begin with
-    ///      and thus, we provide this function to calculate how much amount of `tokenToBurn` can be
-    ///      claimable immediately.
-    /// @return maxBurnTokenAmount Maximum `tokenToBurn` amount that can be burned.
-    function maxBurnAmountClaimable()
-        public
-        view
-        returns (uint256 maxBurnTokenAmount)
-    {
-        maxBurnTokenAmount =
-            (tokenToBuy.balanceOf(address(this)) * tokenToBuy.tokenPrice()) /
-            exchangePrice;
     }
 
     /// @dev Although this is marked as an external function, it is meant to be only called by this contract.
@@ -334,6 +297,43 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
             // QUESTION: Does this event emission makes sense to be included?
             emit BuyTokenPriceUpdated(tokenToBuyPrice);
         }
+    }
+    
+    /// @notice Function to get the amount of `tokenToBurn` that should be burned to
+    ///         receive `amount` of `tokenToBuy`.
+    /// @param amount `tokenToBuy` amount to be converted.
+    /// @return burnTokenAmount Amount converted to `tokenToBurn`.
+    function convertToTokenToBurn(
+        uint256 amount
+    ) public view returns (uint256 burnTokenAmount) {
+        burnTokenAmount = (amount * tokenToBuy.tokenPrice()) / exchangePrice;
+    }
+
+    /// @notice Function to get the amount of `tokenToBuy` that can be claimed by burning `amount`
+    ///         of `tokenToBurn`.
+    /// @param amount `tokenToBurn` amount to be converted.
+    /// @return buyTokenAmount Amount converted to `tokenToBuy`.
+    function convertToTokenToBuy(
+        uint256 amount
+    ) public view returns (uint256 buyTokenAmount) {
+        buyTokenAmount = (amount * exchangePrice) / tokenToBuy.tokenPrice();
+    }
+
+    /// @notice Function to get the max amount of `tokenToBurn` that can be burned and claimable
+    ///         for `tokenToBuy`.
+    /// @dev This function allows us to make assumptions about the success of the claim function.
+    /// @dev This contract is expected to be containing a limited amount of `tokenToBuy` to begin with
+    ///      and thus, we provide this function to calculate how much amount of `tokenToBurn` can be
+    ///      claimable immediately.
+    /// @return maxBurnTokenAmount Maximum `tokenToBurn` amount that can be burned.
+    function maxBurnAmountClaimable()
+        public
+        view
+        returns (uint256 maxBurnTokenAmount)
+    {
+        maxBurnTokenAmount =
+            (tokenToBuy.balanceOf(address(this)) * tokenToBuy.tokenPrice()) /
+            exchangePrice;
     }
 
     /////////////////////////////////////////////

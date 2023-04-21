@@ -84,52 +84,32 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         crossChainCallGasLimit = _crossChainCallGasLimit;
     }
 
-    /// @notice Function to burn `amount` of tokens and create an order against it.
-    /// @param amount Amount of `tokenToBurn` to be burnt and exchanged.
-    function buyBackOnL2(
-        uint256 amount
-    ) external whenNotPaused whenL2ComptrollerSet {
-        _burnAndUpdate(msg.sender, amount);
-        _claimOnL2(msg.sender, msg.sender);
-    }
-
     /// @notice Function to burn `amount` of tokens and claim against it on L2.
-    /// @param amount Amount of `tokenToBurn` to be burnt and exchanged.
-    /// @param receiver Address of the account which will receive the buy tokens.
-    function buyBackOnL2AndTransfer(
+    /// @param amount Amount of `tokenToBurn` to be burnt.
+    /// @param receiver Address of the account which will receive the claim.
+    function buyBackOnL2(
         address receiver,
         uint256 amount
     ) external whenNotPaused whenL2ComptrollerSet {
-        _burnAndUpdate(msg.sender, amount);
-        _claimOnL2(msg.sender, receiver);
-    }
+        // Burning the `amount` tokens held by the user without transferring them to
+        // this contract first. This functionality is provided by the `ERC20Burnable` contract.
+        tokenToBurn.burnFrom(msg.sender, amount);
 
-    /// @notice Function to initiate a claim on L2 after burning of `tokenToBurn`.
-    /// @dev Can be used to trigger a claim on L2 is cross chain call fails for some reason.
-    ///      after calling `buyBackOnL2`.
-    function claimOnL2() external whenNotPaused {
-        _claimOnL2(msg.sender, msg.sender);
+        burntAmountOf[msg.sender] += amount;
+
+        _claimOnL2(msg.sender, receiver);
     }
 
     /// @notice Function to initiate a claim on L2 after burning of `tokenToBurn` and transfer the claimed
     ///         tokens to another address.
-    /// @dev Can be used to trigger a claim on L2 is cross chain call fails for some reason.
+    /// @dev Can be used to trigger a claim on L2 if cross chain call fails for some reason.
     ///      after calling `buyBackOnL2`.
-    function claimOnL2AndTransfer(address receiver) external whenNotPaused {
+    function claimOnL2(address receiver) external whenNotPaused {
         _claimOnL2(msg.sender, receiver);
     }
 
-    function _burnAndUpdate(
-        address depositor,
-        uint256 amount
-    ) internal {
-        // Burning the `amount` tokens held by the user without transferring them to
-        // this contract first. This functionality is provided by the `ERC20Burnable` contract.
-        tokenToBurn.burnFrom(depositor, amount);
-
-        burntAmountOf[depositor] += amount;
-    }
-
+    /// @dev Partial claims on L2 cannot be made from L1. 
+    /// @dev This function transfers max claimable amount of `depositor` to `receiver`.
     // Question: Should a check of L2Comptroller address be made?
     function _claimOnL2(address depositor, address receiver) internal {
         uint256 totalAmount = burntAmountOf[msg.sender];
@@ -152,7 +132,6 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
         emit TokenClaimInitiated(depositor, receiver, totalAmount);
     }
-
 
     /////////////////////////////////////////////
     //             Owner Functions             //
