@@ -14,8 +14,8 @@ contract BuyBack is Setup {
     using stdStorage for StdStorage;
 
     // Events in L2Comptroller and L1Comptroller.
-    event RequireErrorDuringBuyBack(address indexed depositor, bytes reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, string reason);
+    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
 
     // Custom errors in L2Comptroller and L1Comptroller contracts.
     error OnlyCrossChainAllowed();
@@ -149,13 +149,10 @@ contract BuyBack is Setup {
     }
 
     function test_Revert_WhenNotEnoughBuyTokensInL2Comptroller() public {
-        // Impersonate L2Comptroller and transfer tokenToBuy to some random address for this test.
-        vm.startPrank(address(L2ComptrollerProxy));
+        vm.startPrank(alice);
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
         deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
-
-        changePrank(alice);
 
         // Approve the MTA tokens to the L2Comptroller for buyback.
         IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
@@ -169,13 +166,10 @@ contract BuyBack is Setup {
     }
 
     function test_Revert_WhenNoBuyTokensInL2Comptroller() public {
-        // Impersonate L2Comptroller and transfer tokenToBuy to some random address for this test.
-        vm.startPrank(address(L2ComptrollerProxy));
+        vm.startPrank(alice);
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
         deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
-
-        changePrank(alice);
 
         // Approve the MTA tokens to the L2Comptroller for buyback.
         IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
@@ -227,8 +221,8 @@ contract BuyBackFromL1 is Setup {
     using stdStorage for StdStorage;
 
     // Events in L2Comptroller and L1Comptroller.
-    event RequireErrorDuringBuyBack(address indexed depositor, bytes reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, string reason);
+    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
 
     // Custom errors in L2Comptroller and L1Comptroller contracts.
     error OnlyCrossChainAllowed();
@@ -390,8 +384,7 @@ contract BuyBackFromL1 is Setup {
     function test_ShouldBeAbleToBuyBackFromL1MultipleTimes_WhenNotEnoughBuyTokensOnL2()
         public
     {
-        // Impersonate L2Comptroller and transfer tokenToBuy to some random address for this test.
-        vm.startPrank(address(L2ComptrollerProxy));
+        vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 2e18.
         deal(address(tokenToBuy), address(L2ComptrollerProxy), 2e18);
@@ -409,13 +402,11 @@ contract BuyBackFromL1 is Setup {
             abi.encode(address(L1ComptrollerProxy))
         );
 
-        changePrank(address(L2DomainMessenger));
-
         // Expecting a revert as there aren't enough tokens in L2Comptroller.
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerProxy));
 
-        emit AssertErrorDuringBuyBack(
+        emit RequireErrorDuringBuyBack(
             alice,
             "ERC20: transfer amount exceeds balance"
         );
@@ -474,11 +465,10 @@ contract BuyBackFromL1 is Setup {
     function test_ShouldBeAbleToBuyBackFromL1MultipleTimes_WhenNoBuyTokensOnL2()
         public
     {
-        // Impersonate L2Comptroller and transfer tokenToBuy to some random address for this test.
-        vm.startPrank(address(L2ComptrollerProxy));
+        vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 2e18.
-        deal(address(tokenToBuy), address(L2ComptrollerProxy), 2e18);
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
 
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
         uint256 buyTokenBalanceOfComptroller = tokenToBuy.balanceOf(
@@ -493,13 +483,11 @@ contract BuyBackFromL1 is Setup {
             abi.encode(address(L1ComptrollerProxy))
         );
 
-        changePrank(address(L2DomainMessenger));
-
         // Expecting a revert as there aren't enough tokens in L2Comptroller.
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerProxy));
 
-        emit AssertErrorDuringBuyBack(
+        emit RequireErrorDuringBuyBack(
             alice,
             "ERC20: transfer amount exceeds balance"
         );
@@ -640,5 +628,174 @@ contract BuyBackFromL1 is Setup {
         L2ComptrollerProxy.buyBackFromL1(alice, bob, 100e18);
 
         vm.clearMockedCalls();
+    }
+}
+
+contract ClaimOnL2 is Setup {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+    using stdStorage for StdStorage;
+
+    // Events in L2Comptroller and L1Comptroller.
+    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
+
+    // Custom errors in L2Comptroller and L1Comptroller contracts.
+    error OnlyCrossChainAllowed();
+    error PriceDropExceedsLimit(
+        uint256 minAcceptablePrice,
+        uint256 actualPrice
+    );
+
+    function setUp() public override {
+        super.setUp();
+        vm.selectFork(l2ForkId);
+    }
+
+    function test_ShouldBeAbleToClaimOnL2_FullClaimAmount_WhenBuyBackFromL1Fails()
+        public
+    {
+        vm.startPrank(address(L2DomainMessenger));
+
+        // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
+
+        uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
+
+        // Since L2ComptrollerProxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // we need the L2DomainMessenger to report the correct cross-chain caller.
+        vm.mockCall(
+            address(L2DomainMessenger),
+            abi.encodeWithSignature("xDomainMessageSender()"),
+            abi.encode(address(L1ComptrollerProxy))
+        );
+
+        // Expecting a revert as there aren't enough tokens in L2Comptroller.
+        // Since the try/catch block will handle the error, we are checking for the event emission instead.
+        vm.expectEmit(true, true, false, false, address(L2ComptrollerProxy));
+
+        emit RequireErrorDuringBuyBack(
+            alice,
+            "ERC20: transfer amount exceeds balance"
+        );
+
+        L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
+
+        changePrank(alice);
+
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 1000e18);
+
+        uint256 expectedBuyTokenAmount = (100e18 *
+            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+
+        L2ComptrollerProxy.claim(alice, 100e18);
+
+        assertEq(
+            aliceBuyTokenBalanceBefore + expectedBuyTokenAmount,
+            tokenToBuy.balanceOf(alice),
+            "Alice's buy token balance incorrect"
+        );
+        assertEq(
+            1000e18 - expectedBuyTokenAmount,
+            tokenToBuy.balanceOf(address(L2ComptrollerProxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.claimedAmountOf(alice),
+            100e18,
+            "Alice's claim amount incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.l1BurntAmountOf(alice),
+            100e18,
+            "Alice's L2 burn amount incorrect"
+        );
+    }
+
+    function test_ShouldBeAbleToClaimOnL2_PartialClaimAmount_WhenBuyBackFromL1Fails()
+        public
+    {
+        vm.startPrank(address(L2DomainMessenger));
+
+        // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
+
+        uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
+
+        // Since L2ComptrollerProxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // we need the L2DomainMessenger to report the correct cross-chain caller.
+        vm.mockCall(
+            address(L2DomainMessenger),
+            abi.encodeWithSignature("xDomainMessageSender()"),
+            abi.encode(address(L1ComptrollerProxy))
+        );
+
+        // Expecting a revert as there aren't enough tokens in L2Comptroller.
+        // Since the try/catch block will handle the error, we are checking for the event emission instead.
+        vm.expectEmit(true, true, false, false, address(L2ComptrollerProxy));
+
+        emit RequireErrorDuringBuyBack(
+            alice,
+            "ERC20: transfer amount exceeds balance"
+        );
+
+        L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
+
+        changePrank(alice);
+
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 1000e18);
+
+        uint256 expectedBuyTokenAmount1 = (70e18 *
+            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+
+        L2ComptrollerProxy.claim(alice, 70e18);
+
+        assertEq(
+            aliceBuyTokenBalanceBefore + expectedBuyTokenAmount1,
+            tokenToBuy.balanceOf(alice),
+            "Alice's buy token balance incorrect"
+        );
+        assertEq(
+            1000e18 - expectedBuyTokenAmount1,
+            tokenToBuy.balanceOf(address(L2ComptrollerProxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.claimedAmountOf(alice),
+            70e18,
+            "Alice's claim amount incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.l1BurntAmountOf(alice),
+            100e18,
+            "Alice's L2 burn amount incorrect"
+        );
+
+        uint256 expectedBuyTokenAmount2 = (30e18 *
+            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+
+        L2ComptrollerProxy.claim(alice, 30e18);
+
+        assertEq(
+            aliceBuyTokenBalanceBefore +
+                expectedBuyTokenAmount1 +
+                expectedBuyTokenAmount2,
+            tokenToBuy.balanceOf(alice),
+            "Alice's buy token balance incorrect"
+        );
+        assertEq(
+            1000e18 - expectedBuyTokenAmount1 - expectedBuyTokenAmount2,
+            tokenToBuy.balanceOf(address(L2ComptrollerProxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.claimedAmountOf(alice),
+            100e18,
+            "Alice's claim amount incorrect"
+        );
+        assertEq(
+            L2ComptrollerProxy.l1BurntAmountOf(alice),
+            100e18,
+            "Alice's L2 burn amount incorrect"
+        );
     }
 }

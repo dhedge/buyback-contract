@@ -22,8 +22,8 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event BuyTokenPriceUpdated(uint256 updatedBuyTokenPrice);
     event ModifiedMaxTokenPriceDrop(uint256 newMaxTokenPriceDrop);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
-    event RequireErrorDuringBuyBack(address indexed depositor, bytes reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, string reason);
+    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
     event TokensBoughtOnL1(
         address indexed depositor,
         address indexed receiver,
@@ -224,11 +224,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
                 buyTokenAmount
             );
         } catch (bytes memory reason) {
-            // Catch failing require() or revert().
-            emit RequireErrorDuringBuyBack(l1Depositor, reason);
-        } catch Error(string memory reason) {
             // Catch failing assert().
             emit AssertErrorDuringBuyBack(l1Depositor, reason);
+        } catch Error(string memory reason) {
+            // Catch failing require() or revert().
+            emit RequireErrorDuringBuyBack(l1Depositor, reason);
         }
     }
 
