@@ -12,8 +12,12 @@ contract BuyBackOnL2 is Setup {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using stdStorage for StdStorage;
 
-    function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsSender() public {
+    function setUp() public override {
+        super.setUp();
         vm.selectFork(l1ForkId);
+    } 
+
+    function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsSender() public {
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
         uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
 
@@ -64,7 +68,6 @@ contract BuyBackOnL2 is Setup {
     }
 
     function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsNotSender() public {
-        vm.selectFork(l1ForkId);
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
         uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
         address dummyReceiver = makeAddr("dummyReceiver");
@@ -116,7 +119,6 @@ contract BuyBackOnL2 is Setup {
     }
 
     function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsSender() public {
-        vm.selectFork(l1ForkId);
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
         uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
         uint256 bobBalanceBefore = tokenToBurnL1.balanceOf(bob);
@@ -185,7 +187,6 @@ contract BuyBackOnL2 is Setup {
     }
 
     function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsNotSender() public {
-        vm.selectFork(l1ForkId);
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
         uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
         uint256 bobBalanceBefore = tokenToBurnL1.balanceOf(bob);
@@ -255,7 +256,6 @@ contract BuyBackOnL2 is Setup {
     }
 
     function test_Revert_WhenPaused() public {
-        vm.selectFork(l1ForkId);
         address dummyReceiver = makeAddr("dummyReceiver");
 
         // Impersonate the owner of the proxy contract.
@@ -273,7 +273,6 @@ contract BuyBackOnL2 is Setup {
     }
 
     function test_Revert_WhenL2ComptrollerNotSet() public {
-        vm.selectFork(l1ForkId);
         address dummyReceiver = makeAddr("dummyReceiver");
 
         // Find the slot of the `L2Comptroller` storage variable in the `L1Comptroller` contract.
@@ -302,9 +301,12 @@ contract ClaimOnL2 is Setup {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using stdStorage for StdStorage;
 
-    function test_ShouldCallTheCrossDomainMessengerOnL1_WhenReceiverIsSender() public {
+    function setUp() public override {
+        super.setUp();
         vm.selectFork(l1ForkId);
+    }
 
+    function test_ShouldCallTheCrossDomainMessengerOnL1_WhenReceiverIsSender() public {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
@@ -339,7 +341,6 @@ contract ClaimOnL2 is Setup {
     }
 
     function test_TotalAmountBeingClaimedIsCorrect_WhenReceiverIsNotSender() public {
-        vm.selectFork(l1ForkId);
         address dummyReceiver = makeAddr("dummyReceiver");
 
         vm.startPrank(alice);
@@ -398,7 +399,6 @@ contract ClaimOnL2 is Setup {
     }
 
     function test_Revert_WhenNoBuyBackInitiated_AndReceiverIsSender() public {
-        vm.selectFork(l1ForkId);
 
         vm.startPrank(alice);
 
@@ -409,7 +409,6 @@ contract ClaimOnL2 is Setup {
     }
 
     function test_Revert_WhenNoBuyBackInitiated_AndReceiverIsNotSender() public {
-        vm.selectFork(l1ForkId);
         address dummyReceiver = makeAddr("dummyReceiver");
 
         vm.startPrank(alice);

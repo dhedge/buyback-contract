@@ -22,7 +22,8 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event BuyTokenPriceUpdated(uint256 updatedBuyTokenPrice);
     event ModifiedMaxTokenPriceDrop(uint256 newMaxTokenPriceDrop);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
-    event ErrorDuringBuyBack(address indexed depositor, bytes reason);
+    event RequireErrorDuringBuyBack(address indexed depositor, bytes reason);
+    event AssertErrorDuringBuyBack(address indexed depositor, string reason);
     event TokensBoughtOnL1(
         address indexed depositor,
         address indexed receiver,
@@ -164,11 +165,17 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // Transferring the `amount` of `tokenToBurn` to the burn multisig.
         tokenToBurn.safeTransferFrom(msg.sender, burnMultiSig, amount);
 
-        buyTokenAmount = this._buyBack(msg.sender, receiver, amount);
+        buyTokenAmount = this._buyBack(receiver, amount);
 
         emit TokensBoughtOnL2(msg.sender, receiver, amount, buyTokenAmount);
     }
 
+    /// @notice Function which allows buy back from L1 without bridging tokens.
+    /// @dev This function can only be called by Optimism's CrossDomainMessenger contract on L2 and the call should have originated
+    ///      from the L1Comptroller contract on L1.
+    /// @param l1Depositor The address which burned `totalAmountBurntOnL1` of `tokenToBurn` on L1.
+    /// @param receiver Address of the receiver of the `tokenToBuy`.
+    /// @param totalAmountBurntOnL1 Cumulative sum of tokens burnt on L1 by `l1Depositor`.
     function buyBackFromL1(
         address l1Depositor,
         address receiver,
@@ -204,9 +211,12 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // The reason we are using try-catch block is that we want to store the `totalAmountBurntOnL1`
         // regardless of the failure of the `_buyBack` function. This allows for the depositor
         // to claim their share on L2 later.
-        try this._buyBack(l1Depositor, receiver, burnTokenAmount) returns (
+        try this._buyBack(receiver, burnTokenAmount) returns (
             uint256 buyTokenAmount
         ) {
+            // Updating the amount claimed against the tokens burnt by the `l1Depositor`.
+            claimedAmountOf[l1Depositor] += burnTokenAmount;
+
             emit TokensBoughtOnL1(
                 l1Depositor,
                 receiver,
@@ -214,7 +224,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
                 buyTokenAmount
             );
         } catch (bytes memory reason) {
-            emit ErrorDuringBuyBack(l1Depositor, reason);
+            // Catch failing require() or revert().
+            emit RequireErrorDuringBuyBack(l1Depositor, reason);
+        } catch Error(string memory reason) {
+            // Catch failing assert().
+            emit AssertErrorDuringBuyBack(l1Depositor, reason);
         }
     }
 
@@ -222,7 +236,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @param receiver Receiver of the `tokenToBuy` claim.
     /// @param amount Amount of `tokenToBurn` to claim against.
     /// @dev Use `convertToTokenToBurn` to get the proper `amount`.
-    function claimOnL2(
+    function claim(
         address receiver,
         uint256 amount
     ) external whenNotPaused {
@@ -250,23 +264,25 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
                 burnTokenAmount,
                 amount
             );
-        
-        uint256 buyTokenAmount = this._buyBack(msg.sender, receiver, amount);
+
+        // Updating the amount claimed against the tokens burnt by the `msg.sender` on L1.
+        claimedAmountOf[msg.sender] += amount;
+
+        uint256 buyTokenAmount = this._buyBack(receiver, amount);
 
         emit TokensBoughtOnL2(msg.sender, receiver, amount, buyTokenAmount);
     }
 
     /// @dev Although this is marked as an external function, it is meant to be only called by this contract.
     ///      The naming convention is deliberately unfollowed to semantically enforce the meaning.
+    // Question: Should we change the name of the function to "updateAndTransfer" instead?
     function _buyBack(
-        address depositor,
         address receiver,
         uint256 amount
     ) external returns (uint256 buyTokenAmount) {
         if (msg.sender != address(this)) revert ExternalCallerNotAllowed();
 
         uint256 tokenToBuyPrice = tokenToBuy.tokenPrice();
-
         uint256 minAcceptablePrice = lastTokenToBuyPrice -
             ((lastTokenToBuyPrice * maxTokenPriceDrop) / DENOMINATOR);
 
@@ -278,13 +294,9 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // Calculating how many buy tokens should be transferred to the caller.
         buyTokenAmount = (amount * exchangePrice) / tokenToBuyPrice;
 
-        // Updating the amount claimed against the tokens burnt by the `depositor`.
-        // NOTE: We are ignoring certain checks here which have already been made in the parent functions
-        // calling this one. This is the reason we are not allowing anyone apart from this contract to call
-        // this function.
-        claimedAmountOf[depositor] += amount;
-
         // Transfer the tokens to the caller.
+        // We are deliberately not checking if this contract has enough tokens as
+        // this would have the desired impact in case of low buy token balance anyway.
         IERC20Upgradeable(address(tokenToBuy)).safeTransfer(
             receiver,
             buyTokenAmount
@@ -298,7 +310,7 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
             emit BuyTokenPriceUpdated(tokenToBuyPrice);
         }
     }
-    
+
     /// @notice Function to get the amount of `tokenToBurn` that should be burned to
     ///         receive `amount` of `tokenToBuy`.
     /// @param amount `tokenToBuy` amount to be converted.

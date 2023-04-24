@@ -10,6 +10,7 @@ import {L2Comptroller} from "../../src/L2Comptroller.sol";
 import {IERC20Burnable} from "../../src/interfaces/IERC20Burnable.sol";
 import {IPoolLogic} from "../../src/interfaces/IPoolLogic.sol";
 import {ICrossDomainMessenger} from "../../src/interfaces/ICrossDomainMessenger.sol";
+import {IL2CrossDomainMessenger} from "../../src/interfaces/IL2CrossDomainMessenger.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -29,8 +30,8 @@ contract Setup is Test {
         ICrossDomainMessenger(0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1);
 
     // Cross domain messenger on L2 Ethereum
-    ICrossDomainMessenger L2DomainMessenger =
-        ICrossDomainMessenger(0x4200000000000000000000000000000000000007);
+    IL2CrossDomainMessenger L2DomainMessenger =
+        IL2CrossDomainMessenger(0x4200000000000000000000000000000000000007);
 
     // Address of the MTA token on Ethereum.
     IERC20Burnable internal constant tokenToBurnL1 =
@@ -54,7 +55,7 @@ contract Setup is Test {
     uint256 internal l2ForkId;
     bytes32 private constant SALT = keccak256(abi.encodePacked(uint16(69)));
 
-    function setUp() public {
+    function setUp() public virtual {
         uint256 l1ForkBlockNumber = vm.envUint("ETHEREUM_FORK_BLOCK_NUMBER");
         uint256 l2ForkBlockNumber = vm.envUint("OPTIMISM_FORK_BLOCK_NUMBER");
 
