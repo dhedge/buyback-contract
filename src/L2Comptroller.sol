@@ -232,14 +232,20 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         }
     }
 
+    /// @notice Function to claim all the claimable `tokenToBuy` tokens of a depositor.
+    /// @dev A depositor is an address which has burnt tokens on L1 (using L1Comptroller).
+    function claimAll(address receiver) external whenNotPaused {
+        claim(
+            receiver,
+            l1BurntAmountOf[msg.sender] - claimedAmountOf[msg.sender]
+        );
+    }
+
     /// @notice Function to calim any `amount` of `tokenToBuy` on L2.
     /// @param receiver Receiver of the `tokenToBuy` claim.
     /// @param amount Amount of `tokenToBurn` to claim against.
     /// @dev Use `convertToTokenToBurn` to get the proper `amount`.
-    function claim(
-        address receiver,
-        uint256 amount
-    ) external whenNotPaused {
+    function claim(address receiver, uint256 amount) public whenNotPaused {
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
         uint256 totalAmountClaimed = claimedAmountOf[msg.sender];
         uint256 totalAmountBurntOnL1 = l1BurntAmountOf[msg.sender];
@@ -331,6 +337,19 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         buyTokenAmount = (amount * exchangePrice) / tokenToBuy.tokenPrice();
     }
 
+    /// @notice Function to get the amount of `tokenToBuy` claimable by a depositor.
+    /// @dev A depositor is an address which has burnt tokens on L1 (using L1Comptroller).
+    /// @param depositor Address of the account which burnt tokens on L1.
+    /// @return tokenToBuyClaimable The amount claimable by `depositor` in `tokenToBuy` denomination.
+    function getClaimableAmount(
+        address depositor
+    ) public view returns (uint256 tokenToBuyClaimable) {
+        return
+            convertToTokenToBuy(
+                l1BurntAmountOf[depositor] - claimedAmountOf[depositor]
+            );
+    }
+
     /// @notice Function to get the max amount of `tokenToBurn` that can be burned and claimable
     ///         for `tokenToBuy`.
     /// @dev This function allows us to make assumptions about the success of the claim function.
@@ -398,13 +417,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to pause the critical functions in this contract.
-    /// @dev This function won't make any state changes if already paused.
     function pause() external onlyOwner {
         _pause();
     }
 
     /// @notice Function to unpause the critical functions in this contract.
-    /// @dev This function won't make any state changes if already unpaused.
     function unpause() external onlyOwner {
         _unpause();
     }
