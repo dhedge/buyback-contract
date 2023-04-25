@@ -110,7 +110,6 @@ contract ClaimOnL2 is Setup {
     }
 
     function test_Revert_WhenNoBuyBackInitiated_AndReceiverIsSender() public {
-
         vm.startPrank(alice);
 
         // Expecting a revert since no buyback was ever performed.

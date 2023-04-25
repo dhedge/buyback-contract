@@ -15,14 +15,6 @@ contract BuyBackFromL1 is Setup {
 
     // Events in L2Comptroller and L1Comptroller.
     event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
-
-    // Custom errors in L2Comptroller and L1Comptroller contracts.
-    error OnlyCrossChainAllowed();
-    error PriceDropExceedsLimit(
-        uint256 minAcceptablePrice,
-        uint256 actualPrice
-    );
 
     function setUp() public override {
         super.setUp();
@@ -396,7 +388,7 @@ contract BuyBackFromL1 is Setup {
     }
 
     function test_Revert_WhenCallerIsNotL1Comptroller() public {
-        vm.expectRevert(OnlyCrossChainAllowed.selector);
+        vm.expectRevert(L2Comptroller.OnlyCrossChainAllowed.selector);
 
         // Bob is the attacker here.
         vm.startPrank(bob);
@@ -415,7 +407,7 @@ contract BuyBackFromL1 is Setup {
             abi.encode(bob)
         );
 
-        vm.expectRevert(OnlyCrossChainAllowed.selector);
+        vm.expectRevert(L2Comptroller.OnlyCrossChainAllowed.selector);
         vm.startPrank(address(L2DomainMessenger));
 
         L2ComptrollerProxy.buyBackFromL1(alice, bob, 100e18);

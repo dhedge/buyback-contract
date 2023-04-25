@@ -13,17 +13,6 @@ contract BuyBack is Setup {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using stdStorage for StdStorage;
 
-    // Events in L2Comptroller and L1Comptroller.
-    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
-
-    // Custom errors in L2Comptroller and L1Comptroller contracts.
-    error OnlyCrossChainAllowed();
-    error PriceDropExceedsLimit(
-        uint256 minAcceptablePrice,
-        uint256 actualPrice
-    );
-
     function setUp() public override {
         super.setUp();
         vm.selectFork(l2ForkId);
@@ -204,7 +193,7 @@ contract BuyBack is Setup {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                PriceDropExceedsLimit.selector,
+                L2Comptroller.PriceDropExceedsLimit.selector,
                 currentTokenPrice -
                     ((currentTokenPrice *
                         L2ComptrollerProxy.maxTokenPriceDrop()) / 10_000),

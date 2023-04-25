@@ -15,14 +15,6 @@ contract Claim is Setup {
 
     // Events in L2Comptroller and L1Comptroller.
     event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertErrorDuringBuyBack(address indexed depositor, bytes reason);
-
-    // Custom errors in L2Comptroller and L1Comptroller contracts.
-    error OnlyCrossChainAllowed();
-    error PriceDropExceedsLimit(
-        uint256 minAcceptablePrice,
-        uint256 actualPrice
-    );
 
     function setUp() public override {
         super.setUp();
@@ -232,7 +224,7 @@ contract Claim is Setup {
         L2ComptrollerProxy.claim(alice, 100e18);
     }
 
-    function test_Revert_WhenClaimAmountTooHigh_WhenBuyBackFromL1Failed() public {
+    function test_Revert_WhenClaimAmountTooHigh_AndBuyBackFromL1Failed() public {
          vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.

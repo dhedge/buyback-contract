@@ -235,6 +235,8 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to claim all the claimable `tokenToBuy` tokens of a depositor.
     /// @dev A depositor is an address which has burnt tokens on L1 (using L1Comptroller).
     function claimAll(address receiver) external whenNotPaused {
+        // The difference between burnt amount and previously claimed amount gives us
+        // the claimable amount in `tokenToBurn` denomination.
         claim(
             receiver,
             l1BurntAmountOf[msg.sender] - claimedAmountOf[msg.sender]
