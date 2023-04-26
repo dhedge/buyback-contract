@@ -364,9 +364,9 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         view
         returns (uint256 maxBurnTokenAmount)
     {
-        maxBurnTokenAmount =
-            (tokenToBuy.balanceOf(address(this)) * tokenToBuy.tokenPrice()) /
-            exchangePrice;
+        maxBurnTokenAmount = convertToTokenToBurn(
+            tokenToBuy.balanceOf(address(this))
+        );
     }
 
     /////////////////////////////////////////////
