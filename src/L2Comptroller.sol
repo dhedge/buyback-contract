@@ -191,12 +191,6 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
         uint256 totalAmountClaimed = claimedAmountOf[l1Depositor];
 
-        // If the tokens have been claimed already then, revert the transaction.
-        // This check is necessary as the L1Comptroller doesn't know if the claims
-        // have succeeded on L2 or not and hence can't revert the transaction on L1 itself.
-        if (totalAmountClaimed == totalAmountBurntOnL1)
-            revert BuyTokenAlreadyClaimed(l1Depositor, totalAmountBurntOnL1);
-
         // The cumulative token amount burnt and claimed against on L2 should never be less than
         // what's been burnt on L1. This indicates some serious issues.
         assert(totalAmountClaimed < totalAmountBurntOnL1);

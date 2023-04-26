@@ -21,11 +21,11 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event L2ComptrollerSet(address newL2Comptroller);
     event CrossChainGasLimitModified(uint256 newCrossChainGasLimit);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
-    event TokensBurned(address indexed depositor, uint256 burnTokenAmount);
-    event TokenClaimInitiated(
+    event BuyBackFromL1Initiated(
         address indexed depositor,
         address indexed receiver,
-        uint256 burnTokenAmount
+        uint256 burnTokenAmount,
+        uint256 totalAmountBurnt
     );
 
     error ZeroAddress();
@@ -85,6 +85,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to burn `amount` of tokens and claim against it on L2.
+    /// @dev If a transaction passes on L1 but fails on L2 then the user must claim their share on L2 directly.
     /// @param amount Amount of `tokenToBurn` to be burnt.
     /// @param receiver Address of the account which will receive the claim.
     function buyBackOnL2(
@@ -95,42 +96,21 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // this contract first. This functionality is provided by the `ERC20Burnable` contract.
         tokenToBurn.burnFrom(msg.sender, amount);
 
-        burntAmountOf[msg.sender] += amount;
-
-        _claimOnL2(msg.sender, receiver);
-    }
-
-    /// @notice Function to initiate a claim on L2 after burning of `tokenToBurn` and transfer the claimed
-    ///         tokens to another address.
-    /// @dev Can be used to trigger a claim on L2 if cross chain call fails for some reason.
-    ///      after calling `buyBackOnL2`.
-    function claimOnL2(address receiver) external whenNotPaused {
-        _claimOnL2(msg.sender, receiver);
-    }
-
-    /// @dev Partial claims on L2 cannot be made from L1. 
-    /// @dev This function transfers max claimable amount of `depositor` to `receiver`.
-    // Question: Should a check of L2Comptroller address be made?
-    function _claimOnL2(address depositor, address receiver) internal {
-        uint256 totalAmount = burntAmountOf[msg.sender];
-
-        // This check isn't necessary as this case is handled in the L2Comptroller anyway 
-        // but we don't want the user calling this function when they never initiated a buy back.
-        if(totalAmount == 0) revert InvalidClaim();
+        uint256 totalBurntAmount = burntAmountOf[msg.sender] += amount;
 
         // Send a cross chain message to `L2Comptroller` for releasing the buy tokens.
         crossDomainMessenger.sendMessage(
             L2Comptroller,
             abi.encodeWithSignature(
                 "buyBackFromL1(address,address,uint)",
-                depositor,
+                msg.sender,
                 receiver,
-                totalAmount
+                totalBurntAmount
             ),
             crossChainCallGasLimit
         );
 
-        emit TokenClaimInitiated(depositor, receiver, totalAmount);
+        emit BuyBackFromL1Initiated(msg.sender, receiver, amount, totalBurntAmount);
     }
 
     /////////////////////////////////////////////
