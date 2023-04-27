@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     etherscan: {
         // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
         apiKey: {
-            etherscan: process.env.ETHERSCAN_API_KEY,
+            mainnet: process.env.ETHERSCAN_API_KEY,
             optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY,
         },
     },
