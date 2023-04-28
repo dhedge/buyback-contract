@@ -9,9 +9,13 @@ async function main() {
     const exchangePrice = ethers.utils.parseUnits("3", 16); // $0.03
     const maxTokenPriceDrop = 10; // 10:10000 => 0.1% max price drop acceptable
 
+    const signer = (await ethers.getSigners())[0];
+    console.log("Deployer: ", signer.address);
+
     const L2ComptrollerFactory = await ethers.getContractFactory(
         "L2Comptroller"
     );
+
     const L2Comptroller = await upgrades.deployProxy(
         L2ComptrollerFactory,
         [
@@ -24,6 +28,8 @@ async function main() {
         ],
         { kind: "transparent" }
     );
+
+    await L2Comptroller.deployed();
 
     console.log(`L2Comptroller deployed at ${L2Comptroller.address}`);
 

@@ -8,9 +8,6 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 
-// TODO: Remove this line before deployment.
-import "forge-std/console.sol";
-
 /// @title L1 comptroller contract for token buy backs.
 /// @notice Contract to burn a token and claim another one on L2.
 /// @author dHEDGE

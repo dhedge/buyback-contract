@@ -6,6 +6,9 @@ async function main() {
     const tokenToBurn = "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2";
     const crossChainGasLimit = 1920000;
 
+    const signer = (await ethers.getSigners())[0];
+    console.log("Deployer: ", signer.address);
+
     const L1ComptrollerFactory = await ethers.getContractFactory(
         "L1Comptroller"
     );
@@ -14,6 +17,8 @@ async function main() {
         [L1CrossDomainMessenger, tokenToBurn, crossChainGasLimit],
         { kind: "transparent" }
     );
+
+    await L1Comptroller.deployed();
 
     console.log(`L1Comptroller deployed at ${L1Comptroller.address}`);
 
