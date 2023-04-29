@@ -18,7 +18,11 @@ task(
             `Setting ${taskArgs.l2comptroller} as L2Comptroller in L1Comptroller at ${taskArgs.l1comptroller}...`
         );
 
-        await L1Comptroller.setL2Comptroller(taskArgs.l2comptroller);
+        if (
+            (await L1Comptroller.L2Comptroller()) ===
+            ethers.constants.AddressZero
+        )
+            await L1Comptroller.setL2Comptroller(taskArgs.l2comptroller);
 
         console.log(
             `L2Comptroller set. Transferring ownership to ${taskArgs.multisig}`

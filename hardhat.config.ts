@@ -9,6 +9,8 @@ import { HardhatUserConfig, task } from "hardhat/config";
 
 import "./deployment-scripts/tasks/L1Handover.ts";
 import "./deployment-scripts/tasks/L2Handover.ts";
+import "./deployment-scripts/tasks/CheckL1Comptroller.ts";
+import "./deployment-scripts/tasks/CheckL2Comptroller.ts";
 
 const config: HardhatUserConfig = {
     solidity: {

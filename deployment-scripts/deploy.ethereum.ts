@@ -1,20 +1,18 @@
 import { ethers, upgrades } from "hardhat";
 import { tryVerify } from "./misc/Helpers";
+import { config } from "./configs/config.ethereum";
 
 async function main() {
-    const L1CrossDomainMessenger = "0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1";
-    const tokenToBurn = "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2";
-    const crossChainGasLimit = 1920000;
-
     const signer = (await ethers.getSigners())[0];
     console.log("Deployer: ", signer.address);
 
     const L1ComptrollerFactory = await ethers.getContractFactory(
         "L1Comptroller"
     );
+    
     const L1Comptroller = await upgrades.deployProxy(
         L1ComptrollerFactory,
-        [L1CrossDomainMessenger, tokenToBurn, crossChainGasLimit],
+        [config.L1CrossDomainMessenger, config.MTA, config.CrossChainGasLimit],
         { kind: "transparent" }
     );
 

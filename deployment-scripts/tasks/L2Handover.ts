@@ -18,7 +18,12 @@ task(
             `Setting ${taskArgs.l1comptroller} as L1Comptroller in L2Comptroller at ${taskArgs.l2comptroller}...`
         );
 
-        await L2Comptroller.setL1Comptroller(taskArgs.l1comptroller);
+        // If L1Comptroller is not set by the owner then set it.
+        if (
+            (await L2Comptroller.L1Comptroller()) ===
+            ethers.constants.AddressZero
+        )
+            await L2Comptroller.setL1Comptroller(taskArgs.l1comptroller);
 
         console.log(
             `L1Comptroller set. Transferring ownership to ${taskArgs.multisig}`
@@ -32,5 +37,7 @@ task(
 
         await upgrades.admin.transferProxyAdminOwnership(taskArgs.multisig);
 
-        console.log("Ownership transferred successfully");
+        console.log(
+            `Ownership transferred successfully to ${taskArgs.multisig}`
+        );
     });
