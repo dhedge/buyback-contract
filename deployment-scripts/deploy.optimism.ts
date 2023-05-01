@@ -1,6 +1,5 @@
-import { ethers, upgrades } from "hardhat";
 import { tryVerify } from "./misc/Helpers";
-import {config} from "./configs/config.optimism";
+import { config } from "./configs/config.optimism";
 
 async function main() {
     const signer = (await ethers.getSigners())[0];

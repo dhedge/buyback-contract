@@ -47,7 +47,8 @@ task(
             .and(ethers.BigNumber.from("0xffffffff"));
 
         expect(crossChainGasLimit.toString()).to.equal(
-            config.CrossChainGasLimit.toString()
+            config.CrossChainGasLimit.toString(),
+            "Cross chain gas limit incorrect"
         );
 
         console.log("All checks passed successfully!");

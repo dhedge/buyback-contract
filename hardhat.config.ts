@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
-import fs from "fs";
 import "hardhat-preprocessor";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "@openzeppelin/hardhat-upgrades";
-import { HardhatUserConfig, task } from "hardhat/config";
+import "@openzeppelin/hardhat-defender";
+import { HardhatUserConfig } from "hardhat/config";
 
 import "./deployment-scripts/tasks/L1Handover.ts";
 import "./deployment-scripts/tasks/L2Handover.ts";
@@ -54,6 +54,10 @@ const config: HardhatUserConfig = {
             optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
         },
     },
+    defender: {
+        apiKey: process.env.DEFENDER_API_KEY!,
+        apiSecret: process.env.DEFENDER_SECRET_KEY!
+    }
 };
 
 export default config;

@@ -1,4 +1,3 @@
-import { ethers, upgrades } from "hardhat";
 import { tryVerify } from "./misc/Helpers";
 import { config } from "./configs/config.ethereum";
 
