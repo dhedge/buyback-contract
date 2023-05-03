@@ -10,8 +10,14 @@
             "kind": "transparent"
         }
     ],
-    "impls": {
-        "address": "0xFf164a896500dBd08B440430E3EE5b2eEa7E6326",
-        "txHash": "0x84e483acc4dd76840964fac62271ec223a69d24be926c796cb0ad8a7abf96ea4"
-    }
+    "impls": [
+        {
+            "address": "0xFf164a896500dBd08B440430E3EE5b2eEa7E6326",
+            "txHash": "0x84e483acc4dd76840964fac62271ec223a69d24be926c796cb0ad8a7abf96ea4"
+        },
+        {
+            "address": "0x4C004a19Ede6590847C198c7e57b7e060cF35a45",
+            "txHash": "0x3807da606720f99ba695ab03ba8d75a34c5077878172fab55f924cb3f54c5d8a"
+        }
+    ]
 }

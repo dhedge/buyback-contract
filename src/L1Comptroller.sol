@@ -27,7 +27,6 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
     error ZeroAddress();
     error ZeroValue();
-    error InvalidClaim();
     error L2ComptrollerNotSet();
 
     /// @notice Token to burn.
@@ -99,7 +98,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         crossDomainMessenger.sendMessage(
             L2Comptroller,
             abi.encodeWithSignature(
-                "buyBackFromL1(address,address,uint)",
+                "buyBackFromL1(address,address,uint256)",
                 msg.sender,
                 receiver,
                 totalBurntAmount

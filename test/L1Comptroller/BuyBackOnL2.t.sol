@@ -38,7 +38,7 @@ contract BuyBackOnL2 is Setup {
                 (
                     address(L2ComptrollerProxy),
                     abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint)",
+                        "buyBackFromL1(address,address,uint256)",
                         alice,
                         alice,
                         100e18
@@ -89,7 +89,7 @@ contract BuyBackOnL2 is Setup {
                 (
                     address(L2ComptrollerProxy),
                     abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint)",
+                        "buyBackFromL1(address,address,uint256)",
                         alice,
                         dummyReceiver,
                         100e18

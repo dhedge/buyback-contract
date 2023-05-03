@@ -23,6 +23,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/hardhat-defender": "^1.8.2",
     "@openzeppelin/hardhat-upgrades": "^1.23.1",
     "@safe-global/protocol-kit": "^0.1.1",
     "@safe-global/safe-core-sdk-types": "^1.9.1",

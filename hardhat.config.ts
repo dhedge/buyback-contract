@@ -7,10 +7,12 @@ import "@openzeppelin/hardhat-upgrades";
 import "@openzeppelin/hardhat-defender";
 import { HardhatUserConfig } from "hardhat/config";
 
-import "./deployment-scripts/tasks/L1Handover.ts";
-import "./deployment-scripts/tasks/L2Handover.ts";
-import "./deployment-scripts/tasks/CheckL1Comptroller.ts";
-import "./deployment-scripts/tasks/CheckL2Comptroller.ts";
+import "./deployment-scripts/tasks/L1Handover";
+import "./deployment-scripts/tasks/L2Handover";
+import "./deployment-scripts/tasks/CheckL1Comptroller";
+import "./deployment-scripts/tasks/CheckL2Comptroller";
+import "./deployment-scripts/tasks/L1Upgrade";
+import "./deployment-scripts/tasks/L2Upgrade";
 
 const config: HardhatUserConfig = {
     solidity: {
