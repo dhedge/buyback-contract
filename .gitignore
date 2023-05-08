@@ -13,5 +13,13 @@ docs/
 # Dotenv file
 .env
 
+# Node Modules
+node_modules
+
 # VSCode file
 .vscode
+
+# Hardhat files
+cache_hardhat
+typechain-types
+artifacts

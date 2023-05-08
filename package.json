@@ -1,0 +1,37 @@
+{
+  "name": "mta-buyback",
+  "version": "1.0.0",
+  "description": "MTA token buyback and burn system.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhedge/buyback-contract.git"
+  },
+  "author": "dHEDGE",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dhedge/buyback-contract/issues"
+  },
+  "homepage": "https://github.com/dhedge/buyback-contract#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.0.1",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/hardhat-defender": "^1.8.2",
+    "@openzeppelin/hardhat-upgrades": "^1.23.1",
+    "@safe-global/protocol-kit": "^0.1.1",
+    "@safe-global/safe-core-sdk-types": "^1.9.1",
+    "@safe-global/safe-deployments": "^1.22.0",
+    "@safe-global/safe-ethers-adapters": "^0.1.0-alpha.17",
+    "axios": "^1.3.6",
+    "dotenv": "^16.0.3",
+    "hardhat": "^2.14.0",
+    "hardhat-preprocessor": "^0.1.5"
+  }
+}

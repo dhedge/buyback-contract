@@ -29,7 +29,7 @@ contract Setup is Test {
     ICrossDomainMessenger L1DomainMessenger =
         ICrossDomainMessenger(0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1);
 
-    // Cross domain messenger on L2 Ethereum
+    // Cross domain messenger on L2 Optimism
     IL2CrossDomainMessenger L2DomainMessenger =
         IL2CrossDomainMessenger(0x4200000000000000000000000000000000000007);
 
@@ -43,7 +43,7 @@ contract Setup is Test {
 
     // Address of the dHEDGE Stablecoin Yield pool on Optimsim.
     IPoolLogic internal constant tokenToBuy =
-        IPoolLogic(0x1eC50880101022C11530A069690F5446d1464592);
+        IPoolLogic(0x0F6eAe52ae1f94Bc759ed72B201A2fDb14891485);
 
     L1Comptroller internal L1ComptrollerProxy;
     L2Comptroller internal L2ComptrollerProxy;
