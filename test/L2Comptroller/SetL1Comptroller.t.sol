@@ -26,7 +26,7 @@ contract SetL1Comptroller is Setup {
 
         L2ComptrollerProxy.setL1Comptroller(newL1Comptroller);
 
-        assertEq(L2ComptrollerProxy.L1Comptroller(), newL1Comptroller);
+        assertEq(L2ComptrollerProxy.l1Comptroller(), newL1Comptroller);
     }
 
     function test_Revert_WhenNotTheOwner() public {

@@ -48,7 +48,7 @@ contract BuyBackOnL2 is Setup {
             )
         );
 
-        L1ComptrollerProxy.buyBackOnL2(alice, 100e18);
+        L1ComptrollerProxy.buyBack(alice, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(alice),
@@ -99,7 +99,7 @@ contract BuyBackOnL2 is Setup {
             )
         );
 
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(alice),
@@ -131,10 +131,10 @@ contract BuyBackOnL2 is Setup {
             200e18
         );
 
-        L1ComptrollerProxy.buyBackOnL2(alice, 100e18);
+        L1ComptrollerProxy.buyBack(alice, 100e18);
 
         // Initiate the buy back on L1 again.
-        L1ComptrollerProxy.buyBackOnL2(alice, 100e18);
+        L1ComptrollerProxy.buyBack(alice, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(alice),
@@ -161,13 +161,13 @@ contract BuyBackOnL2 is Setup {
             200e18
         );
 
-        L1ComptrollerProxy.buyBackOnL2(alice, 100e18);
+        L1ComptrollerProxy.buyBack(alice, 100e18);
 
         // Skipping 10 days arbitrarily.
         skip(10 days);
 
         // Initiate the buy back on L1 again.
-        L1ComptrollerProxy.buyBackOnL2(alice, 100e18);
+        L1ComptrollerProxy.buyBack(alice, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(bob),
@@ -200,10 +200,10 @@ contract BuyBackOnL2 is Setup {
             200e18
         );
 
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         // Initiate the buy back on L1 again.
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(alice),
@@ -230,13 +230,13 @@ contract BuyBackOnL2 is Setup {
             200e18
         );
 
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         // Skipping 10 days arbitrarily.
         skip(10 days);
 
         // Initiate the buy back on L1 again.
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         assertEq(
             tokenToBurnL1.balanceOf(bob),
@@ -269,7 +269,7 @@ contract BuyBackOnL2 is Setup {
         vm.expectRevert("Pausable: paused");
 
         vm.prank(alice);
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
     }
 
     function test_Revert_WhenL2ComptrollerNotSet() public {
@@ -278,7 +278,7 @@ contract BuyBackOnL2 is Setup {
         // Find the slot of the `L2Comptroller` storage variable in the `L1Comptroller` contract.
         uint256 slot = stdstore
             .target(L1ComptrollerImplementation)
-            .sig("L2Comptroller()")
+            .sig("l2Comptroller()")
             .find();
 
         // Modify the storage slot to set the `L2Comptroller` variable to address(0).
@@ -288,11 +288,11 @@ contract BuyBackOnL2 is Setup {
             bytes32(uint256(0))
         );
 
-        // Impersonate as Alice and call the `buyBackOnL2` function.
+        // Impersonate as Alice and call the `buyBack` function.
         // We are expecting this call to revert as L2Comptroller is not set.
         vm.prank(alice);
         vm.expectRevert(L1Comptroller.L2ComptrollerNotSet.selector);
 
-        L1ComptrollerProxy.buyBackOnL2(dummyReceiver, 100e18);
+        L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
     }
 }
