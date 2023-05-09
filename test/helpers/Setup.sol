@@ -16,9 +16,6 @@ import "forge-std/console.sol";
 
 // TODO: Write tests for the entire setup and see nothing is left uninitialized.
 contract Setup is Test {
-    // Default Foundry deployer address.abi
-    address constant deployer = 0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84;
-
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
     address internal admin = makeAddr("admin");

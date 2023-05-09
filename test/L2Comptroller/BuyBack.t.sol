@@ -115,6 +115,80 @@ contract BuyBack is Setup {
         );
     }
 
+    function test_ShouldUpdateBuyTokenPrice_WhenLastUpdatedPriceIsLower()
+        public
+    {
+        uint256 latestTokenToBuyPrice = L2ComptrollerProxy
+            .lastTokenToBuyPrice();
+
+        uint256 modifiedTokenPrice = latestTokenToBuyPrice + 1e6;
+
+        vm.mockCall(
+            address(tokenToBuy),
+            abi.encodeWithSignature("tokenPrice()"),
+            abi.encode(modifiedTokenPrice)
+        );
+
+        assertEq(
+            tokenToBuy.tokenPrice(),
+            modifiedTokenPrice,
+            "Token price not modified"
+        );
+
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L2Comptroller for buyback.
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
+            address(L2ComptrollerProxy),
+            100e18
+        );
+
+        L2ComptrollerProxy.buyBack(alice, 100e18);
+
+        assertEq(
+            L2ComptrollerProxy.lastTokenToBuyPrice(),
+            modifiedTokenPrice,
+            "Latest buy token price changed"
+        );
+    }
+
+    function test_ShouldNotUpdateBuyTokenPrice_WhenLastUpdatedPriceIsHigher()
+        public
+    {
+        uint256 latestTokenToBuyPrice = L2ComptrollerProxy
+            .lastTokenToBuyPrice();
+
+        uint256 modifiedTokenPrice = latestTokenToBuyPrice - 1e6;
+
+        vm.mockCall(
+            address(tokenToBuy),
+            abi.encodeWithSignature("tokenPrice()"),
+            abi.encode(modifiedTokenPrice)
+        );
+
+        assertEq(
+            tokenToBuy.tokenPrice(),
+            modifiedTokenPrice,
+            "Token price not modified"
+        );
+
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L2Comptroller for buyback.
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
+            address(L2ComptrollerProxy),
+            100e18
+        );
+
+        L2ComptrollerProxy.buyBack(alice, 100e18);
+
+        assertEq(
+            L2ComptrollerProxy.lastTokenToBuyPrice(),
+            latestTokenToBuyPrice,
+            "Latest buy token price changed"
+        );
+    }
+
     function test_Revert_WhenNotEnoughBurnTokensWithUser() public {
         uint256 aliceBurnTokenBalanceBefore = tokenToBurnL2.balanceOf(alice);
 
@@ -202,5 +276,20 @@ contract BuyBack is Setup {
         );
 
         L2ComptrollerProxy.buyBack(alice, 100e18);
+    }
+
+    function test_Revert_WhenInternalBuybackFunctionCalledByAExternalCaller()
+        public
+    {
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                L2Comptroller.ExternalCallerNotAllowed.selector
+            )
+        );
+
+        vm.prank(alice);
+        
+        L2ComptrollerProxy._buyBack(alice, 100e18);
     }
 }
