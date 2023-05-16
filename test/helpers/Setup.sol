@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.16;
+pragma solidity 0.8.18;
 
 import {ProxyAdmin} from "openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 import {TransparentUpgradeableProxy} from "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -15,7 +15,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
 // TODO: Write tests for the entire setup and see nothing is left uninitialized.
-contract Setup is Test {
+abstract contract Setup is Test {
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
     address internal admin = makeAddr("admin");

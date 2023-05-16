@@ -8,7 +8,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tests:integration": "forge t --no-match-contract '(?:Fuzz|Invariant)'",
+    "tests:fuzz": "forge t --match-contract '(?:Fuzz)'",
+    "tests:invariant": "forge t --match-contract '(?:Invariant)'"
   },
   "repository": {
     "type": "git",

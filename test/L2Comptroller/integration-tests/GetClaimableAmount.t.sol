@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.18;
 
-import {Setup} from "../helpers/Setup.sol";
+import {Setup} from "../../helpers/Setup.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L2Comptroller} from "../../src/L2Comptroller.sol";
+import {L2Comptroller} from "../../../src/L2Comptroller.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 

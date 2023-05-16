@@ -20,7 +20,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event ModifiedMaxTokenPriceDrop(uint256 newMaxTokenPriceDrop);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
     event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertionErrorDuringBuyBack(address indexed depositor, uint256 errorCode);
+    event AssertionErrorDuringBuyBack(
+        address indexed depositor,
+        uint256 errorCode
+    );
     event LowLevelErrorDuringBuyBack(address indexed depositor, bytes reason);
     event TokensClaimed(
         address indexed depositor,
@@ -37,10 +40,6 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     error PriceDropExceedsLimit(
         uint256 minAcceptablePrice,
         uint256 actualPrice
-    );
-    error BuyTokenAlreadyClaimed(
-        address l1Depositor,
-        uint256 totalAmountClaimed
     );
     error ExceedingClaimableAmount(
         address depositor,
@@ -193,11 +192,15 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
         // The cumulative token amount burnt and claimed against on L2 should never be less than
         // what's been burnt on L1. This indicates some serious issues.
-        assert(totalAmountClaimed < totalAmountBurntOnL1);
+        assert(totalAmountClaimed <= totalAmountBurntOnL1);
 
         // The difference of both these variables tell us the claimable token amount in `tokenToBurn`
         // denomination.
         uint256 burnTokenAmount = totalAmountBurntOnL1 - totalAmountClaimed;
+
+        if (burnTokenAmount == 0) {
+            revert ExceedingClaimableAmount(l1Depositor, 0, 0);
+        }
 
         // Store the new total amount of tokens burnt on L1 and claimed against on L2.
         l1BurntAmountOf[l1Depositor] = totalAmountBurntOnL1;
@@ -253,21 +256,21 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 totalAmountClaimed = claimedAmountOf[msg.sender];
         uint256 totalAmountBurntOnL1 = l1BurntAmountOf[msg.sender];
 
-        // If the tokens have been claimed already then, revert the transaction.
-        // TODO: Remove this check as `burnTokenAmount` calculation already handles this.
-        if (totalAmountClaimed == totalAmountBurntOnL1)
-            revert BuyTokenAlreadyClaimed(msg.sender, totalAmountBurntOnL1);
-
         // The cumulative token amount burnt and claimed against on L2 should never be less than
         // what's been burnt on L1. This indicates some serious issues.
-        assert(totalAmountClaimed < totalAmountBurntOnL1);
+        assert(totalAmountClaimed <= totalAmountBurntOnL1);
 
         // The difference of both these variables tells us the remaining claimable token amount in `tokenToBurn`
         // denomination.
         uint256 remainingBurnTokenAmount = totalAmountBurntOnL1 -
             totalAmountClaimed;
 
-        if (burnTokenAmount > remainingBurnTokenAmount)
+        // Will revert in case there are no tokens remaining to be claimed by the user or the amount they
+        // asked for exceeds their claimable amount.
+        if (
+            burnTokenAmount > remainingBurnTokenAmount ||
+            remainingBurnTokenAmount == 0
+        )
             revert ExceedingClaimableAmount(
                 msg.sender,
                 remainingBurnTokenAmount,
