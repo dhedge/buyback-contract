@@ -237,7 +237,7 @@ contract ClaimAll is Setup {
         );
     }
 
-    function test_ShouldNotBeAbleToClaim_WhenAlreadyClaimedAll() public {
+    function test_Revert_WhenAlreadyClaimedAll() public {
         vm.startPrank(address(L2DomainMessenger));
 
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);

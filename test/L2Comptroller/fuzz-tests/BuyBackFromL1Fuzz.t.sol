@@ -24,15 +24,24 @@ contract BuyBackFromL1Fuzz is Setup {
     function testFuzz_ShouldBeAbleToBuyBackFromL1_WhenSenderIsReceiver(
         uint256 tokenToBurnAmount
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
         tokenToBurnAmount = bound(tokenToBurnAmount, 1, tokenSupplyBefore);
 
-        uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
-        uint256 buyTokenBalanceOfComptroller = tokenToBuy.balanceOf(
-            address(L2ComptrollerProxy)
+        vm.selectFork(l2ForkId);
+
+        uint256 buyTokenBalanceOfComptroller = type(uint256).max;
+
+        deal(
+            address(tokenToBuy),
+            address(L2ComptrollerProxy),
+            buyTokenBalanceOfComptroller
         );
+        
+        uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
         uint256 expectedBuyTokenAmount = (tokenToBurnAmount *
             L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
 
@@ -75,17 +84,26 @@ contract BuyBackFromL1Fuzz is Setup {
     function testFuzz_ShouldBeAbleToBuyBackFromL1_WhenSenderIsNotReceiver(
         uint256 tokenToBurnAmount
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
         tokenToBurnAmount = bound(tokenToBurnAmount, 1, tokenSupplyBefore);
 
+        vm.selectFork(l2ForkId);
+
+        uint256 buyTokenBalanceOfComptroller = type(uint256).max;
+
+        deal(
+            address(tokenToBuy),
+            address(L2ComptrollerProxy),
+            buyTokenBalanceOfComptroller
+        );
+
         address dummyReceiver = makeAddr("dummyReceiver");
         uint256 dummyReceiverBuyTokenBalanceBefore = tokenToBuy.balanceOf(
             dummyReceiver
-        );
-        uint256 buyTokenBalanceOfComptroller = tokenToBuy.balanceOf(
-            address(L2ComptrollerProxy)
         );
         uint256 expectedBuyTokenAmount = (tokenToBurnAmount *
             L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
@@ -133,11 +151,15 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 tokenToBurnAmount1,
         uint256 tokenToBurnAmount2
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+
+        vm.selectFork(l2ForkId);
+
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
-        uint256 buyTokenBalanceOfComptroller = (tokenSupplyBefore *
-            exchangePrice) / buyTokenPrice;
+        uint256 buyTokenBalanceOfComptroller = type(uint256).max;
 
         // Make sure that L2Comptroller has enough buy tokens.
         deal(
@@ -146,16 +168,19 @@ contract BuyBackFromL1Fuzz is Setup {
             buyTokenBalanceOfComptroller
         );
 
-        // Make sure the fuzzer gives amount less than the token supply.
+        // As the fuzzer can give values which can yield buy token amount == 0, we don't want the test to revert in such cases.
+        // Hence the minimum is also bounded such that at least 1 `tokenToBuy` worth of `tokenToBurn` is used.
         tokenToBurnAmount1 = bound(
             tokenToBurnAmount1,
-            1,
-            tokenSupplyBefore / 2
+            1 + buyTokenPrice / exchangePrice,
+            tokenSupplyBefore
         );
+
+        // Make sure the fuzzer gives amount less than the token supply in case of `tokenToBurn` being the L2 version.
         tokenToBurnAmount2 = bound(
             tokenToBurnAmount2,
-            1,
-            tokenSupplyBefore / 2
+            1 + buyTokenPrice / exchangePrice,
+            tokenToBurnL2.totalSupply()
         );
 
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
@@ -217,7 +242,12 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 tokenToBurnAmount1,
         uint256 tokenToBurnAmount2
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+
+        vm.selectFork(l2ForkId);
+
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
         uint256 buyTokenBalanceOfComptroller = (1 * exchangePrice) /
@@ -230,18 +260,19 @@ contract BuyBackFromL1Fuzz is Setup {
             buyTokenBalanceOfComptroller
         );
 
-        // Make sure the fuzzer gives amount less than the token supply.
         // As the fuzzer can give values which can yield buy token amount == 0, we don't want the test to revert in such cases.
         // Hence the minimum is also bounded such that at least 1 `tokenToBuy` worth of `tokenToBurn` is used.
         tokenToBurnAmount1 = bound(
             tokenToBurnAmount1,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenSupplyBefore
         );
+
+        // Make sure the fuzzer gives amount less than the token supply in case of `tokenToBurn` being the L2 version.
         tokenToBurnAmount2 = bound(
             tokenToBurnAmount2,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenToBurnL2.totalSupply()
         );
 
         vm.startPrank(address(L2DomainMessenger));
@@ -286,9 +317,7 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 expectedBuyTokenAmount = ((tokenToBurnAmount1 +
             tokenToBurnAmount2) * exchangePrice) / buyTokenPrice;
 
-        buyTokenBalanceOfComptroller =
-            (tokenSupplyBefore * exchangePrice) /
-            buyTokenPrice;
+        buyTokenBalanceOfComptroller = type(uint256).max;
 
         // Comptroller now has enough tokens for a claim.
         deal(
@@ -334,7 +363,12 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 tokenToBurnAmount1,
         uint256 tokenToBurnAmount2
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+
+        vm.selectFork(l2ForkId);
+
         uint256 buyTokenBalanceOfComptroller = 0;
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
@@ -346,18 +380,19 @@ contract BuyBackFromL1Fuzz is Setup {
             buyTokenBalanceOfComptroller
         );
 
-        // Make sure the fuzzer gives amount less than the token supply.
         // As the fuzzer can give values which can yield buy token amount == 0, we don't want the test to revert in such cases.
         // Hence the minimum is also bounded such that at least 1 `tokenToBuy` worth of `tokenToBurn` is used.
         tokenToBurnAmount1 = bound(
             tokenToBurnAmount1,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenSupplyBefore
         );
+
+        // Make sure the fuzzer gives amount less than the token supply in case of `tokenToBurn` being the L2 version.
         tokenToBurnAmount2 = bound(
             tokenToBurnAmount2,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenToBurnL2.totalSupply()
         );
 
         vm.startPrank(address(L2DomainMessenger));
@@ -397,9 +432,7 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 expectedBuyTokenAmount = ((tokenToBurnAmount1 +
             tokenToBurnAmount2) * exchangePrice) / buyTokenPrice;
 
-        buyTokenBalanceOfComptroller =
-            (tokenSupplyBefore * exchangePrice) /
-            buyTokenPrice;
+        buyTokenBalanceOfComptroller = type(uint256).max;
 
         // Comptroller now has enough tokens for a claim.
         deal(
@@ -443,11 +476,15 @@ contract BuyBackFromL1Fuzz is Setup {
         uint256 tokenToBurnAmount1,
         uint256 tokenToBurnAmount2
     ) public {
-        uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+
+        vm.selectFork(l2ForkId);
+
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
-        uint256 buyTokenBalanceOfComptroller = (tokenSupplyBefore *
-            exchangePrice) / buyTokenPrice;
+        uint256 buyTokenBalanceOfComptroller = type(uint256).max;
 
         // Make sure that L2Comptroller has enough buy tokens.
         deal(
@@ -456,29 +493,26 @@ contract BuyBackFromL1Fuzz is Setup {
             buyTokenBalanceOfComptroller
         );
 
-        // Make sure the fuzzer gives amount less than the token supply.
         // As the fuzzer can give values which can yield buy token amount == 0, we don't want the test to revert in such cases.
         // Hence the minimum is also bounded such that at least 1 `tokenToBuy` worth of `tokenToBurn` is used.
         tokenToBurnAmount1 = bound(
             tokenToBurnAmount1,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenSupplyBefore
         );
+
+        // Make sure the fuzzer gives amount less than the token supply in case of `tokenToBurn` being the L2 version.
         tokenToBurnAmount2 = bound(
             tokenToBurnAmount2,
             1 + buyTokenPrice / exchangePrice,
-            tokenSupplyBefore / 2
+            tokenToBurnL2.totalSupply()
         );
 
-        deal(
-            address(tokenToBurnL2),
-            alice,
-            tokenToBurnAmount2
-        );
+        deal(address(tokenToBurnL2), alice, tokenToBurnAmount2);
 
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
-        uint256 expectedBuyTokenAmount1 = (tokenToBurnAmount1 *
-            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+        uint256 expectedBuyTokenAmount1 = (tokenToBurnAmount1 * exchangePrice) /
+            buyTokenPrice;
 
         // Since L2ComptrollerProxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
@@ -500,8 +534,8 @@ contract BuyBackFromL1Fuzz is Setup {
             tokenToBurnAmount2
         );
 
-        uint256 expectedBuyTokenAmount2 = (tokenToBurnAmount2 *
-            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+        uint256 expectedBuyTokenAmount2 = (tokenToBurnAmount2 * exchangePrice) /
+            buyTokenPrice;
 
         L2ComptrollerProxy.buyBack(alice, tokenToBurnAmount2);
 
@@ -530,32 +564,4 @@ contract BuyBackFromL1Fuzz is Setup {
             "Alice's L2 burn amount incorrect"
         );
     }
-
-    // function test_Revert_WhenCallerIsNotL1Comptroller() public {
-    //     vm.expectRevert(L2Comptroller.OnlyCrossChainAllowed.selector);
-
-    //     // Bob is the attacker here.
-    //     vm.startPrank(bob);
-
-    //     L2ComptrollerProxy.buyBackFromL1(alice, bob, 100e18);
-
-    //     vm.clearMockedCalls();
-    // }
-
-    // function test_Revert_WhenCallerIsNotL2DomainMessenger() public {
-    //     // Mocking a call such that the transaction originates from an attacker (Bob)
-    //     // instead of L1Comptroller on L1.
-    //     vm.mockCall(
-    //         address(L2DomainMessenger),
-    //         abi.encodeWithSignature("xDomainMessageSender()"),
-    //         abi.encode(bob)
-    //     );
-
-    //     vm.expectRevert(L2Comptroller.OnlyCrossChainAllowed.selector);
-    //     vm.startPrank(address(L2DomainMessenger));
-
-    //     L2ComptrollerProxy.buyBackFromL1(alice, bob, 100e18);
-
-    //     vm.clearMockedCalls();
-    // }
 }

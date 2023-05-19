@@ -16,4 +16,7 @@ optimism = "${OPTIMISM_RPC_URL}"
 ethereum = { key = "${ETHEREUM_API_KEY}" }
 optimism = { key = "${OPTIMISM_API_KEY}" }
 
+[doc]
+title = "MTA Buyback and Burn Contract"
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
