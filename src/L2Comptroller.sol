@@ -104,6 +104,14 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         _disableInitializers();
     }
 
+    /// @notice The initialization function for this contract.
+    /// @param _crossDomainMessenger The cross domain messenger contract on L2.
+    /// @param _tokenToBurn The token to be burnt.
+    /// @param _tokenToBuy The token given after a buyback.
+    /// @param _burnMultiSig The multi-sig address used to bridge `_tokenToBurn` to L1 and burn there.
+    /// @param _exchangePrice The exchange price for redemptions.
+    /// @param _maxTokenPriceDrop The acceptable token price drop in case of loss of peg
+    ///        of the tokens in the `_tokenToBuy` pool.
     function initialize(
         ICrossDomainMessenger _crossDomainMessenger,
         IERC20Upgradeable _tokenToBurn,

@@ -62,6 +62,11 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         _disableInitializers();
     }
 
+    /// @notice Function to initialize this contract.
+    /// @param _crossDomainMessenger The cross domain messenger contract on L1.
+    /// @param _tokenToBurn An ERC20Burnable compliant token.
+    /// @param _crossChainCallGasLimit The gas limit to be passed for a cross chain call
+    ///        to the L2Comptroller contract.
     function initialize(
         ICrossDomainMessenger _crossDomainMessenger,
         IERC20Burnable _tokenToBurn,
