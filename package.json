@@ -8,9 +8,8 @@
     "test": "test"
   },
   "scripts": {
-    "tests:integration": "forge t --no-match-contract '(?:Fuzz|Invariant)'",
-    "tests:fuzz": "forge t --match-contract '(?:Fuzz)'",
-    "tests:invariant": "forge t --match-contract '(?:Invariant)'"
+    "tests:integration": "forge t --no-match-contract '(?:Fuzz)'",
+    "tests:fuzz": "forge t --match-contract '(?:Fuzz)'"
   },
   "repository": {
     "type": "git",
