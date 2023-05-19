@@ -1,15 +1,15 @@
 # MTA Buyback-Contract
+
 Buyback and burn contract for the [mStable MTA token](0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2). Allows a holder of MTA on Ethereum (L1) to burn their tokens on L1 and claim their share of [MTy](0x0f6eae52ae1f94bc759ed72b201a2fdb14891485) on Optimism (L2) without bridging the tokens first. Users who have already bridged their tokens to Optimism can also interact with our contract on L2 to initiate buyback and burn.
 
 ## Motivation
----
+
 dHEDGE recently [acquired](https://forum.mstable.org/t/mip-33-dhedge-acquisition-of-mstable/1017/5) mStable. As part of the acquisition, existing holders of the MTA token have two options:
 
 - dHEDGE & mStable will offer a continuous floor price and set up a UI for redemption. The ability to cash out at the floor price will be available perpetually until it’s no longer relevant and mStable governance decides to sunset the redemption contract.
 - If MTA trades above the floor price, and MTA holders are not redeeming, it would be capital inefficient to lock the full treasury in the redemption contract. Therefore in this scenario, a portion of the treasury can be used in safe yield with proven low risk yield sources and underlying. This will be fully transparent onchain with a private mStable Treasury Yield vault (MTy).
 
 ## The Architecture
----
 
 On a high level, there are two contracts involved in buyback and burn. One will be deployed on L1 Ethereum (the L1Comptroller contract) and the other one will be deployed on Optimism (the L2Comptroller contract). `L1Comptroller` is responsible for burning tokens when MTA holders interact with it and initiate issuance of MTy tokens on L2 using the Optimism bridge. This communication is only uni-directional i.e, the `L2Comptroller` contract never calls the `L1Comptroller`. Since there is no bi-directional communication, we made the contracts in such a way that failure of any calls to the `L2Comptroller` contract doesn't wreak havoc on the accounting being done in the `L1Comptroller` contract. So our main invariant is:
 
@@ -26,7 +26,6 @@ For the users who have already bridged their MTA to Optimism, we allow for claim
 For anymore details, please read the contracts. They are sufficiently documented and if there still exists any issues, please let us know where and we can help you out in understanding this whole architecture.
 
 ## How to run tests?
----
 
 The codebase uses Foundry test suite and integration tests using forking mode. Setup Foundry by following the instructions in their [docs](https://book.getfoundry.sh/getting-started/installation). Make sure that you have set the relevant env variables.
 
