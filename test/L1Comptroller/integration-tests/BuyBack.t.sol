@@ -255,6 +255,111 @@ contract BuyBack is Setup {
         );
     }
 
+    function test_ShouldBeAbleToBuyBack_WhenZeroBurnAmountGiven() public {
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+        uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
+
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L1Comptroller for burn.
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
+            address(L1ComptrollerProxy),
+            100e18
+        );
+
+        // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
+        // with the relevant data.
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerProxy),
+                    abi.encodeWithSignature(
+                        "buyBackFromL1(address,address,uint256)",
+                        alice,
+                        alice,
+                        0
+                    ),
+                    1_920_000
+                )
+            )
+        );
+
+        L1ComptrollerProxy.buyBack(alice, 0);
+
+        assertEq(
+            tokenToBurnL1.balanceOf(alice),
+            aliceBalanceBefore,
+            "Wrong Alice's balance after burn"
+        );
+        assertEq(
+            tokenToBurnL1.totalSupply(),
+            tokenSupplyBefore,
+            "Wrong total supply"
+        );
+        assertEq(
+            L1ComptrollerProxy.burntAmountOf(alice),
+            0,
+            "Burnt amount not updated"
+        );
+    }
+
+    // When a user calls the function with 0 given as the `burnTokenAmount` after
+    // a non-zero value given as `burnTokenAmount`, the call to L2Comptroller should
+    // be passed with the correct cumulative burn token amount.
+    function test_ShouldPassCorrectCumulativeAmount_WhenZeroAmountGivenAfterNonZeroAmount() public {
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+        uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
+
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L1Comptroller for burn.
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
+            address(L1ComptrollerProxy),
+            1000e18
+        );
+
+        L1ComptrollerProxy.buyBack(alice, 100e18);
+
+        // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
+        // with the relevant data.
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerProxy),
+                    abi.encodeWithSignature(
+                        "buyBackFromL1(address,address,uint256)",
+                        alice,
+                        alice,
+                        100e18
+                    ),
+                    1_920_000
+                )
+            )
+        );
+
+        L1ComptrollerProxy.buyBack(alice, 0);
+
+        assertEq(
+            tokenToBurnL1.balanceOf(alice),
+            aliceBalanceBefore - 100e18,
+            "Wrong Alice's balance after burn"
+        );
+        assertEq(
+            tokenToBurnL1.totalSupply(),
+            tokenSupplyBefore - 100e18,
+            "Wrong total supply"
+        );
+        assertEq(
+            L1ComptrollerProxy.burntAmountOf(alice),
+            100e18,
+            "Burnt amount not updated"
+        );
+    }
+
     function test_Revert_WhenPaused() public {
         address dummyReceiver = makeAddr("dummyReceiver");
 

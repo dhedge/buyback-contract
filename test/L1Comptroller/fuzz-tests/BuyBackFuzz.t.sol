@@ -21,7 +21,7 @@ contract BuyBackFuzz is Setup {
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
-        tokenToBurnAmount = bound(tokenToBurnAmount, 1, tokenSupplyBefore);
+        tokenToBurnAmount = bound(tokenToBurnAmount, 0, tokenSupplyBefore);
 
         deal(address(tokenToBurnL1), alice, tokenToBurnAmount);
 
@@ -77,7 +77,7 @@ contract BuyBackFuzz is Setup {
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
-        tokenToBurnAmount = bound(tokenToBurnAmount, 1, tokenSupplyBefore);
+        tokenToBurnAmount = bound(tokenToBurnAmount, 0, tokenSupplyBefore);
 
         deal(address(tokenToBurnL1), alice, tokenToBurnAmount);
 
