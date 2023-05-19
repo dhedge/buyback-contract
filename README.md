@@ -1,6 +1,6 @@
 # MTA Buyback-Contract
 
-Buyback and burn contract for the [mStable MTA token](0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2). Allows a holder of MTA on Ethereum (L1) to burn their tokens on L1 and claim their share of [MTy](0x0f6eae52ae1f94bc759ed72b201a2fdb14891485) on Optimism (L2) without bridging the tokens first. Users who have already bridged their tokens to Optimism can also interact with our contract on L2 to initiate buyback and burn.
+Buyback and burn contract for the [mStable MTA token](https://etherscan.io/address/0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2). Allows a holder of MTA on Ethereum (L1) to burn their tokens on L1 and claim their share of [MTy](https://app.dhedge.org/vault/0x0f6eae52ae1f94bc759ed72b201a2fdb14891485) on Optimism (L2) without bridging the tokens first. Users who have already bridged their tokens to Optimism can also interact with our contract on L2 to initiate buyback and burn.
 
 ## Motivation
 
