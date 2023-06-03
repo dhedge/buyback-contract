@@ -14,7 +14,6 @@ import {IL2CrossDomainMessenger} from "../../src/interfaces/IL2CrossDomainMessen
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-// TODO: Write tests for the entire setup and see nothing is left uninitialized.
 abstract contract Setup is Test {
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");

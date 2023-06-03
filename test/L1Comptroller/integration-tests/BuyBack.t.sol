@@ -400,6 +400,4 @@ contract BuyBack is Setup {
 
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
     }
-
-    // TODO: Add replay attack test.
 }
