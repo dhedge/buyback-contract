@@ -46,6 +46,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 maxClaimableAmount,
         uint256 claimAmount
     );
+    error DecreasingBurntAmount(
+        address depositor,
+        uint256 prevBurntAmount,
+        uint256 givenBurntAmount
+    );
 
     /// @notice Denominator for bps calculations.
     uint256 public constant DENOMINATOR = 10_000;
@@ -198,16 +203,24 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
         uint256 totalAmountClaimed = claimedAmountOf[l1Depositor];
 
-        // The cumulative token amount burnt and claimed against on L2 should never be less than
-        // what's been burnt on L1. This indicates some serious issues.
-        assert(totalAmountClaimed <= totalAmountBurntOnL1);
-
         // The difference of both these variables tell us the claimable token amount in `tokenToBurn`
         // denomination.
         uint256 burnTokenAmount = totalAmountBurntOnL1 - totalAmountClaimed;
 
         if (burnTokenAmount == 0) {
             revert ExceedingClaimableAmount(l1Depositor, 0, 0);
+        }
+
+        uint256 prevBurntAmount = l1BurntAmountOf[l1Depositor];
+
+        // This check prevents replay attacks due to the Optimism bridge architecture which allows for failed transactions to
+        // be replayed. For more info, check: https://github.com/dhedge/buyback-contract/issues/11
+        if (totalAmountBurntOnL1 < prevBurntAmount) {
+            revert DecreasingBurntAmount(
+                l1Depositor,
+                prevBurntAmount,
+                totalAmountBurntOnL1
+            );
         }
 
         // Store the new total amount of tokens burnt on L1 and claimed against on L2.
@@ -239,11 +252,15 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
             // This is executed in case revert() was used.
             emit LowLevelErrorDuringBuyBack(l1Depositor, reason);
         }
+
+        // The cumulative token amount burnt and claimed against on L2 should never be less than
+        // what's been burnt on L1. This indicates some serious issues.
+        assert(totalAmountClaimed <= totalAmountBurntOnL1);
     }
 
     /// @notice Function to claim all the claimable `tokenToBuy` tokens of a depositor.
     /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
-    function claimAll(address receiver) external whenNotPaused {
+    function claimAll(address receiver) external {
         // The difference between burnt amount and previously claimed amount gives us
         // the claimable amount in `tokenToBurn` denomination.
         claim(
@@ -263,10 +280,6 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
         uint256 totalAmountClaimed = claimedAmountOf[msg.sender];
         uint256 totalAmountBurntOnL1 = l1BurntAmountOf[msg.sender];
-
-        // The cumulative token amount burnt and claimed against on L2 should never be less than
-        // what's been burnt on L1. This indicates some serious issues.
-        assert(totalAmountClaimed <= totalAmountBurntOnL1);
 
         // The difference of both these variables tells us the remaining claimable token amount in `tokenToBurn`
         // denomination.
@@ -289,6 +302,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         claimedAmountOf[msg.sender] += burnTokenAmount;
 
         uint256 buyTokenAmount = this._buyBack(receiver, burnTokenAmount);
+
+        // The cumulative token amount burnt and claimed against on L2 should never be less than
+        // what's been burnt on L1. This indicates some serious issues.
+        assert(totalAmountClaimed <= totalAmountBurntOnL1);
 
         emit TokensClaimed(
             msg.sender,
