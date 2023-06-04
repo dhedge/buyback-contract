@@ -6,8 +6,44 @@ import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
 import {L1Comptroller} from "../../../src/L1Comptroller.sol";
 import {L2Comptroller} from "../../../src/L2Comptroller.sol";
+import {ICrossDomainMessenger} from "../../../src/interfaces/ICrossDomainMessenger.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
+
+library AddressAliasHelper {
+    uint160 constant offset =
+        uint160(0x1111000000000000000000000000000000001111);
+
+    function applyL1ToL2Alias(
+        address l1Address
+    ) internal pure returns (address l2Address) {
+        unchecked {
+            l2Address = address(uint160(l1Address) + offset);
+        }
+    }
+}
+
+/**
+ * @title ICrossDomainMessenger
+ * @dev Interface taken from: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/bridge/ICrossDomainMessenger.sol
+ */
+interface ICrossDomainMessengerMod is ICrossDomainMessenger {
+    function l1CrossDomainMessenger() external view returns (address);
+
+    /**
+     * Relays a cross domain message to a contract.
+     * @param _target Target contract address.
+     * @param _sender Message sender address.
+     * @param _message Message to send to the target.
+     * @param _messageNonce Nonce for the provided message.
+     */
+    function relayMessage(
+        address _target,
+        address _sender,
+        bytes memory _message,
+        uint256 _messageNonce
+    ) external;
+}
 
 contract BuyBackFromL1Fuzz is Setup {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -40,7 +76,7 @@ contract BuyBackFromL1Fuzz is Setup {
             address(L2ComptrollerProxy),
             buyTokenBalanceOfComptroller
         );
-        
+
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
         uint256 expectedBuyTokenAmount = (tokenToBurnAmount *
             L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
@@ -562,6 +598,162 @@ contract BuyBackFromL1Fuzz is Setup {
             L2ComptrollerProxy.l1BurntAmountOf(alice),
             tokenToBurnAmount1,
             "Alice's L2 burn amount incorrect"
+        );
+    }
+
+    function testFuzz_TotalAmountClaimed_ShouldAlwaysIncrease(
+        uint256 tokenToBurnAmount1,
+        uint256 tokenToBurnAmount2
+    ) public {
+        ICrossDomainMessengerMod l2xdm = ICrossDomainMessengerMod(
+            0x4200000000000000000000000000000000000007
+        );
+
+        vm.selectFork(l1ForkId);
+
+        uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
+
+        vm.selectFork(l2ForkId);
+
+        uint256 buyTokenPrice = tokenToBuy.tokenPrice();
+        uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
+
+        tokenToBurnAmount2 = bound(
+            tokenToBurnAmount2,
+            1 + buyTokenPrice / exchangePrice,
+            tokenSupplyBefore
+        );
+
+        // As the fuzzer can give values which can yield buy token amount == 0, we don't want the test to revert in such cases.
+        // Hence the minimum is also bounded such that at least 1 `tokenToBuy` worth of `tokenToBurn` is used.
+        // Also we want tokenToBurnAmount1 to be lesser than tokenToBurnAmount2
+        tokenToBurnAmount1 = bound(
+            tokenToBurnAmount1,
+            1 + buyTokenPrice / exchangePrice,
+            tokenToBurnAmount2
+        );
+
+        // Simulate a situation where L2Comptroller has no funds & is paused.
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), 0);
+
+        address owner = L2ComptrollerProxy.owner();
+
+        // Pausing the L2Comptroller contract.
+        vm.prank(owner);
+        L2ComptrollerProxy.pause();
+
+        // Send two txs, one for 1e18 totalBurned and one for 2e18 totalBurned.
+        address aliasedXDM = AddressAliasHelper.applyL1ToL2Alias(
+            l2xdm.l1CrossDomainMessenger()
+        );
+        uint nonce100 = uint(keccak256(abi.encode("nonce100")));
+        uint nonce200 = uint(keccak256(abi.encode("nonce200")));
+
+        vm.startPrank(aliasedXDM);
+
+        l2xdm.relayMessage(
+            address(L1ComptrollerProxy), // L1Comptroller
+            address(L2ComptrollerProxy), // L2Comptroller
+            abi.encodeWithSignature(
+                "buyBackFromL1(address,address,uint256)",
+                alice,
+                alice,
+                tokenToBurnAmount1
+            ),
+            nonce100
+        );
+
+        l2xdm.relayMessage(
+            address(L1ComptrollerProxy), // L1Comptroller
+            address(L2ComptrollerProxy), // L2Comptroller
+            abi.encodeWithSignature(
+                "buyBackFromL1(address,address,uint256)",
+                alice,
+                alice,
+                tokenToBurnAmount2
+            ),
+            nonce200
+        );
+
+        vm.stopPrank();
+
+        // Unpause the L2Comptroller.
+        vm.prank(owner);
+        L2ComptrollerProxy.unpause();
+
+        // Execute the 2e18 transaction first, and then the 1e18 transaction.
+        // In OP Bedrock upgrade, anyone can call this, but on old OP system we need to prank aliased XDM.
+        // These will be saved as unclaimed on contract because there are no funds to pay.
+        vm.startPrank(aliasedXDM);
+
+        l2xdm.relayMessage(
+            address(L1ComptrollerProxy), // L1Comptroller
+            address(L2ComptrollerProxy), // L2Comptroller
+            abi.encodeWithSignature(
+                "buyBackFromL1(address,address,uint256)",
+                alice,
+                alice,
+                tokenToBurnAmount2
+            ),
+            nonce200
+        );
+        l2xdm.relayMessage(
+            address(L1ComptrollerProxy), // L1Comptroller
+            address(L2ComptrollerProxy), // L2Comptroller
+            abi.encodeWithSignature(
+                "buyBackFromL1(address,address,uint256)",
+                alice,
+                alice,
+                tokenToBurnAmount1
+            ),
+            nonce100
+        );
+
+        vm.stopPrank();
+
+        uint256 buyTokenBalanceOfComptroller = type(uint256).max;
+
+        // Add funds to the contract.
+        deal(
+            address(tokenToBuy),
+            address(L2ComptrollerProxy),
+            buyTokenBalanceOfComptroller
+        );
+
+        // user calls claimAll
+        vm.prank(alice);
+        L2ComptrollerProxy.claimAll(alice);
+
+        // The 1e18 totalBurned transaction should have failed since 2e18 totalBurned transaction was replayed first.
+        // There will be some rounding error to be taken care of.
+        assertApproxEqAbs(
+            L2ComptrollerProxy.convertToTokenToBurn(
+                tokenToBuy.balanceOf(alice)
+            ),
+            tokenToBurnAmount2,
+            10e6,
+            "Incorrect burn token balance of Alice"
+        );
+
+        // The L1 burnt amount of Alice should be correct.
+        assertEq(
+            L2ComptrollerProxy.l1BurntAmountOf(alice),
+            tokenToBurnAmount2,
+            "Incorrect L1 burnt amount of Alice"
+        );
+
+        assertEq(
+            L2ComptrollerProxy.claimedAmountOf(alice),
+            tokenToBurnAmount2,
+            "Incorrect Alice's claimed amount"
+        );
+
+        // The buy token balance of L2Comptroller should be correct.
+        assertEq(
+            buyTokenBalanceOfComptroller -
+                tokenToBurnAmount2 * exchangePrice / buyTokenPrice,
+            tokenToBuy.balanceOf(address(L2ComptrollerProxy)),
+            "Incorrect L2Comptroller's buy token balance"
         );
     }
 }
