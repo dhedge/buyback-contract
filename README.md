@@ -25,6 +25,13 @@ For the users who have already bridged their MTA to Optimism, we allow for claim
 
 For anymore details, please read the contracts. They are sufficiently documented and if there still exists any issues, please let us know where and we can help you out in understanding this whole architecture.
 
+## Deployments
+
+| Contract Names | Addresses                                                                                                                             |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| L1Comptroller  | [0x06e54ADa21565c4F2Ebe2bc1E3C4BD04262A4616](https://etherscan.io/address/0x06e54ADa21565c4F2Ebe2bc1E3C4BD04262A4616)            |
+| L2Comptroller  | [0x06e54ADa21565c4F2Ebe2bc1E3C4BD04262A4616](https://optimistic.etherscan.io/address/0x06e54ADa21565c4F2Ebe2bc1E3C4BD04262A4616) |
+
 ## How to run tests?
 
 The codebase uses Foundry test suite and integration tests using forking mode. Setup Foundry by following the instructions in their [docs](https://book.getfoundry.sh/getting-started/installation). Make sure that you have set the relevant env variables.
