@@ -29,6 +29,7 @@ const config: HardhatUserConfig = {
             chainId: 31337,
             url: "http://127.0.0.1:8545",
             timeout: 0,
+            accounts: [`0x${process.env.OPTIMISM_PRIVATE_KEY}`]
         },
         optimism: {
             chainId: 10,

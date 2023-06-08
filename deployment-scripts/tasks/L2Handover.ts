@@ -20,7 +20,7 @@ task(
 
         // If L1Comptroller is not set by the owner then set it.
         if (
-            (await L2Comptroller.L1Comptroller()) ===
+            (await L2Comptroller.l1Comptroller()) ===
             ethers.constants.AddressZero
         )
             await L2Comptroller.setL1Comptroller(taskArgs.l1comptroller);

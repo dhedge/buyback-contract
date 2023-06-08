@@ -23,7 +23,7 @@ task(
         );
 
         expect(initialized.toString()).to.equal("1");
-        expect(await L1Comptroller.L2Comptroller()).to.not.equal(
+        expect(await L1Comptroller.l2Comptroller()).to.not.equal(
             ethers.constants.AddressZero,
             "L2Comptroller not set"
         );

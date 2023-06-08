@@ -19,7 +19,7 @@ task(
         );
 
         if (
-            (await L1Comptroller.L2Comptroller()) ===
+            (await L1Comptroller.l2Comptroller()) ===
             ethers.constants.AddressZero
         )
             await L1Comptroller.setL2Comptroller(taskArgs.l2comptroller);
@@ -36,5 +36,7 @@ task(
 
         await upgrades.admin.transferProxyAdminOwnership(taskArgs.multisig);
 
-        console.log("Ownership transferred successfully");
+        console.log(
+            `Ownership transferred successfully to ${taskArgs.multisig}`
+        );
     });
