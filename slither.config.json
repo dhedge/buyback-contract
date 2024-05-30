@@ -1,0 +1,12 @@
+{
+    "filter_paths": "lib",
+    "solc_remaps": [
+        "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol=/share/lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol",
+        "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol=/share/lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol",
+        "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol=/share/lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol",
+        "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol=/share/lib/openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol",
+        "./interfaces/IERC20Burnable.sol=/share/src/interfaces/IERC20Burnable.sol",
+        "./interfaces/ICrossDomainMessenger.sol=/share/src/interfaces/ICrossDomainMessenger.sol",
+        "./interfaces/IPoolLogic.sol=/share/src/interfaces/IPoolLogic.sol"
+    ]
+}
