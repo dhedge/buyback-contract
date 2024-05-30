@@ -37,7 +37,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     event ModifiedMaxTokenPriceDrop(uint256 newMaxTokenPriceDrop);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
     event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertionErrorDuringBuyBack(address indexed depositor, uint256 errorCode);
+    event AssertionErrorDuringBuyBack(
+        address indexed depositor,
+        uint256 errorCode
+    );
     event LowLevelErrorDuringBuyBack(address indexed depositor, bytes reason);
     event TokensClaimed(
         address indexed depositor,
@@ -55,9 +58,20 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     error ZeroTokenPrice();
     error OnlyCrossChainAllowed();
     error ExternalCallerNotAllowed();
-    error PriceDropExceedsLimit(uint256 minAcceptablePrice, uint256 actualPrice);
-    error ExceedingClaimableAmount(address depositor, uint256 maxClaimableAmount, uint256 claimAmount);
-    error DecreasingBurntAmount(address depositor, uint256 prevBurntAmount, uint256 givenBurntAmount);
+    error PriceDropExceedsLimit(
+        uint256 minAcceptablePrice,
+        uint256 actualPrice
+    );
+    error ExceedingClaimableAmount(
+        address depositor,
+        uint256 maxClaimableAmount,
+        uint256 claimAmount
+    );
+    error DecreasingBurntAmount(
+        address depositor,
+        uint256 prevBurntAmount,
+        uint256 givenBurntAmount
+    );
 
     /////////////////////////////////////////////
     //                Variables                //
@@ -78,11 +92,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     address public burnMultiSig;
 
     /// @notice Stores the exchange price of a `tokenToBurn` in $ terms.
-    /// @dev The exchange prices can only be updated by the L1Comptroller contract.
     mapping(address tokenToBurn => uint256 exchangePrice) public exchangePrices;
 
     /// @notice Stores the last price of a `tokenToBuy` and the max price drop allowed.
-    mapping(IPoolLogic tokenToBuy => BuyTokenDetails buyTokenDetails) public buyTokenDetails;
+    mapping(IPoolLogic tokenToBuy => BuyTokenDetails buyTokenDetails)
+        public buyTokenDetails;
 
     /// @notice Stores the amount of `tokenToBurn` burnt on L1 and claimed on L2.
     /// @dev This allows us to revert transactions if a user is trying to claim `buyTokens` multiple
@@ -104,8 +118,14 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice The initialization function for this contract.
     /// @param _crossDomainMessenger The cross domain messenger contract on L2.
     /// @param _burnMultiSig The multi-sig address used to bridge `_tokenToBurn` to L1 and burn there.
-    function initialize(ICrossDomainMessenger _crossDomainMessenger, address _burnMultiSig) external initializer {
-        if (_burnMultiSig == address(0) || address(_crossDomainMessenger) == address(0)) revert ZeroAddress();
+    function initialize(
+        ICrossDomainMessenger _crossDomainMessenger,
+        address _burnMultiSig
+    ) external initializer {
+        if (
+            _burnMultiSig == address(0) ||
+            address(_crossDomainMessenger) == address(0)
+        ) revert ZeroAddress();
 
         // Initialize ownable contract.
         __Ownable_init();
@@ -122,28 +142,27 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     ///      from the l1Comptroller contract on L1.
     /// @param tokenBurned Address of the token burnt on L1.
     /// @param tokenToBuy Address of the token to be bought.
-    /// @param exchangePrice Pre-determined exchange price of `tokenBurned` in $ terms.
     /// @param l1Depositor The address which burned `totalAmountBurntOnL1` of `tokenToBurn` on L1.
     /// @param receiver Address of the receiver of the `tokenToBuy`.
     /// @param totalAmountBurntOnL1 Cumulative sum of tokens burnt on L1 by `l1Depositor`.
     function buyBackFromL1(
         address tokenBurned,
         address tokenToBuy,
-        uint256 exchangePrice,
         uint256 totalAmountBurntOnL1,
         address l1Depositor,
         address receiver
     ) external whenNotPaused {
         // The caller should be the cross domain messenger contract of Optimism
         // and the call should be initiated by our comptroller contract on L1.
-        if (msg.sender != address(crossDomainMessenger) || crossDomainMessenger.xDomainMessageSender() != l1Comptroller)
-            revert OnlyCrossChainAllowed();
-
-        // Update the exchange price of the `tokenBurned`.
-        exchangePrices[tokenBurned] = exchangePrice;
+        if (
+            msg.sender != address(crossDomainMessenger) ||
+            crossDomainMessenger.xDomainMessageSender() != l1Comptroller
+        ) revert OnlyCrossChainAllowed();
 
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
-        uint256 totalAmountClaimed = burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountClaimed;
+        uint256 totalAmountClaimed = burnAndClaimDetails[l1Depositor][
+            tokenBurned
+        ].totalAmountClaimed;
 
         // The difference of both these variables tell us the claimable token amount in `tokenToBurn`
         // denomination.
@@ -153,25 +172,39 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
             revert ExceedingClaimableAmount(l1Depositor, 0, 0);
         }
 
-        uint256 prevBurntAmount = burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountBurned;
+        uint256 prevBurntAmount = burnAndClaimDetails[l1Depositor][tokenBurned]
+            .totalAmountBurned;
 
         // This check prevents replay attacks due to the Optimism bridge architecture which allows for failed transactions to
         // be replayed. For more info, check: https://github.com/dhedge/buyback-contract/issues/11
         if (totalAmountBurntOnL1 < prevBurntAmount) {
-            revert DecreasingBurntAmount(l1Depositor, prevBurntAmount, totalAmountBurntOnL1);
+            revert DecreasingBurntAmount(
+                l1Depositor,
+                prevBurntAmount,
+                totalAmountBurntOnL1
+            );
         }
 
         // Store the new total amount of tokens burnt on L1 and claimed against on L2.
-        burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountBurned = totalAmountBurntOnL1;
+        burnAndClaimDetails[l1Depositor][tokenBurned]
+            .totalAmountBurned = totalAmountBurntOnL1;
 
         // The reason we are using try-catch block is that we want to store the `totalAmountBurntOnL1`
         // regardless of the failure of the `_buyBack` function. This allows for the depositor
         // to claim their share on L2 later.
-        try this._buyBack(receiver, burnTokenAmount) returns (uint256 buyTokenAmount) {
+        try this._buyBack(receiver, burnTokenAmount) returns (
+            uint256 buyTokenAmount
+        ) {
             // Updating the amount claimed against the tokens burnt by the `l1Depositor`.
-            burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountClaimed += burnTokenAmount;
+            burnAndClaimDetails[l1Depositor][tokenBurned]
+                .totalAmountClaimed += burnTokenAmount;
 
-            emit TokensClaimed(l1Depositor, receiver, burnTokenAmount, buyTokenAmount);
+            emit TokensClaimed(
+                l1Depositor,
+                receiver,
+                burnTokenAmount,
+                buyTokenAmount
+            );
         } catch Error(string memory reason) {
             // This is executed in case revert was called and a reason string was provided.
             emit RequireErrorDuringBuyBack(l1Depositor, reason);
@@ -191,7 +224,11 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to claim all the claimable `tokenToBuy` tokens of a depositor.
     /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
-    function claimAll(address tokenBurned, address tokenToBuy, address receiver) external {
+    function claimAll(
+        address tokenBurned,
+        IPoolLogic tokenToBuy,
+        address receiver
+    ) external {
         // The difference between burnt amount and previously claimed amount gives us
         // the claimable amount in `tokenToBurn` denomination.
         claim(
@@ -209,56 +246,80 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @dev Use `convertToTokenToBurn` to get the proper `amount`.
     function claim(
         address tokenBurned,
-        address tokenToBuy,
-        uint256 exchangePrice,
+        IPoolLogic tokenToBuy,
         uint256 burnTokenAmount,
         address receiver
     ) public whenNotPaused {
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
-        uint256 totalAmountClaimed = burnAndClaimDetails[msg.sender][tokenBurned].totalAmountClaimed;
-        uint256 totalAmountBurntOnL1 = burnAndClaimDetails[msg.sender][tokenBurned].totalAmountBurned;
+        uint256 totalAmountClaimed = burnAndClaimDetails[msg.sender][
+            tokenBurned
+        ].totalAmountClaimed;
+        uint256 totalAmountBurntOnL1 = burnAndClaimDetails[msg.sender][
+            tokenBurned
+        ].totalAmountBurned;
 
         // The difference of both these variables tells us the remaining claimable token amount in `tokenToBurn`
         // denomination.
-        uint256 remainingBurnTokenAmount = totalAmountBurntOnL1 - totalAmountClaimed;
+        uint256 remainingBurnTokenAmount = totalAmountBurntOnL1 -
+            totalAmountClaimed;
 
         // Will revert in case there are no tokens remaining to be claimed by the user or the amount they
         // asked for exceeds their claimable amount.
-        if (burnTokenAmount > remainingBurnTokenAmount || remainingBurnTokenAmount == 0)
-            revert ExceedingClaimableAmount(msg.sender, remainingBurnTokenAmount, burnTokenAmount);
+        if (
+            burnTokenAmount > remainingBurnTokenAmount ||
+            remainingBurnTokenAmount == 0
+        )
+            revert ExceedingClaimableAmount(
+                msg.sender,
+                remainingBurnTokenAmount,
+                burnTokenAmount
+            );
 
         // Updating the amount claimed against the tokens burnt by the `msg.sender` on L1.
-        burnAndClaimDetails[msg.sender][tokenBurned].totalAmountClaimed += burnTokenAmount;
+        burnAndClaimDetails[msg.sender][tokenBurned]
+            .totalAmountClaimed += burnTokenAmount;
 
-        uint256 buyTokenAmount = this._buyBack(tokenToBuy, exchangePrice, burnTokenAmount, receiver);
+        uint256 buyTokenAmount = this._buyBack(
+            tokenToBuy,
+            burnTokenAmount,
+            receiver
+        );
 
         // The cumulative token amount burnt and claimed against on L2 should never be less than
         // what's been burnt on L1. This indicates some serious issues.
         assert(totalAmountClaimed <= totalAmountBurntOnL1);
 
-        emit TokensClaimed(msg.sender, receiver, burnTokenAmount, buyTokenAmount);
+        emit TokensClaimed(
+            msg.sender,
+            receiver,
+            burnTokenAmount,
+            buyTokenAmount
+        );
     }
 
     /// @dev Although this is marked as an external function, it is meant to be only called by this contract.
     ///      The naming convention is deliberately unfollowed to semantically enforce the meaning.
     // solhint-disable-next-line private-vars-leading-underscore
     function _buyBack(
+        address tokenBurned,
         IPoolLogic tokenToBuy,
         uint256 burnTokenAmount,
-        uint256 exchangePrice,
         address receiver
     ) external returns (uint256 buyTokenAmount) {
         if (msg.sender != address(this)) revert ExternalCallerNotAllowed();
 
-        uint256 lastTokenToBuyPrice = buyTokenDetails[tokenToBuy].lastTokenToBuyPrice;
-
+        uint256 lastTokenToBuyPrice = buyTokenDetails[tokenToBuy]
+            .lastTokenToBuyPrice;
+        uint256 exchangePrice = exchangePrices[tokenBurned];
         uint256 tokenToBuyPrice = tokenToBuy.tokenPrice();
         uint256 minAcceptablePrice = lastTokenToBuyPrice -
-            ((lastTokenToBuyPrice * buyTokenDetails[tokenToBuy].maxTokenPriceDrop) / DENOMINATOR);
+            ((lastTokenToBuyPrice *
+                buyTokenDetails[tokenToBuy].maxTokenPriceDrop) / DENOMINATOR);
 
         // If there is a sudden price drop possibly due to a depeg event,
         // we need to revert the transaction.
-        if (tokenToBuyPrice < minAcceptablePrice) revert PriceDropExceedsLimit(minAcceptablePrice, tokenToBuyPrice);
+        if (tokenToBuyPrice < minAcceptablePrice)
+            revert PriceDropExceedsLimit(minAcceptablePrice, tokenToBuyPrice);
 
         // Calculating how many buy tokens should be transferred to the caller.
         buyTokenAmount = (burnTokenAmount * exchangePrice) / tokenToBuyPrice;
@@ -266,7 +327,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         // Transfer the tokens to the caller.
         // We are deliberately not checking if this contract has enough tokens as
         // this would have the desired impact in case of low buy token balance anyway.
-        IERC20Upgradeable(address(tokenToBuy)).safeTransfer(receiver, buyTokenAmount);
+        IERC20Upgradeable(address(tokenToBuy)).safeTransfer(
+            receiver,
+            buyTokenAmount
+        );
 
         // Updating the buy token price for future checks.
         if (lastTokenToBuyPrice < tokenToBuyPrice) {
@@ -276,44 +340,65 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
         }
     }
 
-    // /// @notice Function to get the amount of `tokenToBurn` that should be burned to
-    // ///         receive `amount` of `tokenToBuy`.
-    // /// @param tokenToBuy `tokenToBuy` token address.
-    // /// @param buyTokenAmount `tokenToBuy` amount to be converted.
-    // /// @return burnTokenAmount Amount converted to `tokenToBurn`.
-    // // TODO: Move to L1Comptroller
-    // function convertToTokenToBurn(address tokenToBuy, uint256 buyTokenAmount) public view returns (uint256 burnTokenAmount) {
-    //     burnTokenAmount = (buyTokenAmount * tokenToBuy.tokenPrice()) / exchangePrice;
-    // }
+    /// @notice Function to get the amount of `tokenToBurn` that should be burned to
+    ///         receive `amount` of `tokenToBuy`.
+    /// @param tokenToBuy `tokenToBuy` token address.
+    /// @param buyTokenAmount `tokenToBuy` amount to be converted.
+    /// @return burnTokenAmount Amount converted to `tokenToBurn`.
+    // TODO: Move to L1Comptroller
+    function convertToTokenToBurn(
+        address tokenToBurn,
+        address tokenToBuy,
+        uint256 buyTokenAmount
+    ) public view returns (uint256 burnTokenAmount) {
+        burnTokenAmount =
+            (buyTokenAmount * tokenToBuy.tokenPrice()) /
+            exchangePrices[tokenToBurn];
+    }
 
-    // /// @notice Function to get the amount of `tokenToBuy` that can be claimed by burning `amount`
-    // ///         of `tokenToBurn`.
-    // /// @param burnTokenAmount `tokenToBurn` amount to be converted.
-    // /// @return buyTokenAmount Amount converted to `tokenToBuy`.
-    // // Move to L1Comptroller
-    // function convertToTokenToBuy(uint256 burnTokenAmount) public view returns (uint256 buyTokenAmount) {
-    //     buyTokenAmount = (burnTokenAmount * exchangePrice) / tokenToBuy.tokenPrice();
-    // }
+    /// @notice Function to get the amount of `tokenToBuy` that can be claimed by burning `amount`
+    ///         of `tokenToBurn`.
+    /// @param burnTokenAmount `tokenToBurn` amount to be converted.
+    /// @return buyTokenAmount Amount converted to `tokenToBuy`.
+    // Move to L1Comptroller
+    function convertToTokenToBuy(
+        uint256 burnTokenAmount
+    ) public view returns (uint256 buyTokenAmount) {
+        buyTokenAmount =
+            (burnTokenAmount * exchangePrice) /
+            tokenToBuy.tokenPrice();
+    }
 
-    // /// @notice Function to get the amount of `tokenToBuy` claimable by a depositor.
-    // /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
-    // /// @param depositor Address of the account which burnt tokens on L1.
-    // /// @return tokenToBuyClaimable The amount claimable by `depositor` in `tokenToBuy` denomination.
+    /// @notice Function to get the amount of `tokenToBuy` claimable by a depositor.
+    /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
+    /// @param depositor Address of the account which burnt tokens on L1.
+    /// @return tokenToBuyClaimable The amount claimable by `depositor` in `tokenToBuy` denomination.
     // TODO: Check if this can be moved to L1Comptroller
-    // function getClaimableAmount(address depositor) public view returns (uint256 tokenToBuyClaimable) {
-    //     return convertToTokenToBuy(l1BurntAmountOf[depositor] - claimedAmountOf[depositor]);
-    // }
+    function getClaimableAmount(
+        address depositor
+    ) public view returns (uint256 tokenToBuyClaimable) {
+        return
+            convertToTokenToBuy(
+                l1BurntAmountOf[depositor] - claimedAmountOf[depositor]
+            );
+    }
 
-    // /// @notice Function to get the max amount of `tokenToBurn` that can be burned and claimable
-    // ///         for `tokenToBuy`.
-    // /// @dev This function allows us to make assumptions about the success of the claim function.
-    // /// @dev This contract is expected to be containing a limited amount of `tokenToBuy` to begin with
-    // ///      and thus, we provide this function to calculate how much amount of `tokenToBurn` can be
-    // ///      claimable immediately.
-    // /// @return maxBurnTokenAmount Maximum `tokenToBurn` amount that can be burned.
-    // function maxBurnAmountClaimable() public view returns (uint256 maxBurnTokenAmount) {
-    //     maxBurnTokenAmount = convertToTokenToBurn(tokenToBuy.balanceOf(address(this)));
-    // }
+    /// @notice Function to get the max amount of `tokenToBurn` that can be burned and claimable
+    ///         for `tokenToBuy`.
+    /// @dev This function allows us to make assumptions about the success of the claim function.
+    /// @dev This contract is expected to be containing a limited amount of `tokenToBuy` to begin with
+    ///      and thus, we provide this function to calculate how much amount of `tokenToBurn` can be
+    ///      claimable immediately.
+    /// @return maxBurnTokenAmount Maximum `tokenToBurn` amount that can be burned.
+    function maxBurnAmountClaimable()
+        public
+        view
+        returns (uint256 maxBurnTokenAmount)
+    {
+        maxBurnTokenAmount = convertToTokenToBurn(
+            tokenToBuy.balanceOf(address(this))
+        );
+    }
 
     /////////////////////////////////////////////
     //             Owner Functions             //
@@ -333,7 +418,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to modify the acceptable deviation from the last recorded price
     ///         of the `tokenToBuy`.
     /// @param newMaxTokenPriceDrop New value for deviation.
-    function modifyThreshold(address tokenToBuy, uint256 newMaxTokenPriceDrop) external onlyOwner {
+    function modifyThreshold(
+        address tokenToBuy,
+        uint256 newMaxTokenPriceDrop
+    ) external onlyOwner {
         buyTokenDetails[tokenToBuy].maxTokenPriceDrop = newMaxTokenPriceDrop;
 
         emit ModifiedMaxTokenPriceDrop(newMaxTokenPriceDrop);
@@ -342,7 +430,10 @@ contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to withdraw tokens in an emergency situation.
     /// @param token Address of the token to be withdrawn.
     /// @param amount Amount of the `token` to be removed.
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
+    function emergencyWithdraw(
+        address token,
+        uint256 amount
+    ) external onlyOwner {
         IERC20Upgradeable tokenToWithdraw = IERC20Upgradeable(token);
 
         // If the `amount` is max of uint256 then transfer all the available balance.
