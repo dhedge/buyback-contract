@@ -8,13 +8,14 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 
+import {L2ComptrollerV2} from "./L2ComptrollerV2.sol";
+
 /// @title L1 comptroller contract for token buy backs.
 /// @notice Contract to burn a token and claim another one on L2.
 /// @author dHEDGE
 /// @dev This contract is only useful if paired with the L2 comptroller.
-contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
+contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-
 
     /////////////////////////////////////////////
     //                  Structs                //
@@ -23,7 +24,11 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     struct BurnTokenDetails {
         bool isTokenToBurn;
         bool isIERC20Burnable;
-        uint256 exchangeRate;
+    }
+
+    struct BurnTokenSettings {
+        address tokenToBurn;
+        bool isERC20Burnable;
     }
 
     /////////////////////////////////////////////
@@ -41,7 +46,6 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         uint256 totalAmountBurnt
     );
 
-
     /////////////////////////////////////////////
     //                  Errors                 //
     /////////////////////////////////////////////
@@ -50,8 +54,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     error ZeroValue();
     error L2ComptrollerNotSet();
     error NotBuybackToken(address token);
-    error NotEligibleBuybackPair(address tokenToBuy, address tokenToBurn);
-
+    error TokenCannotBeBought(address token);
 
     /////////////////////////////////////////////
     //                Variables                //
@@ -68,22 +71,17 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
 
     /// @dev The gas limit to be used to call the Optimism Cross Domain Messenger contract.
     uint32 public crossChainCallGasLimit;
-    
+
     /// @notice Mapping of token to be burnt and its details.
     /// @dev Note that we are not enforcing that the `token` be a burnable token.
     ///      We can write different functions depending on the token type.
     mapping(address token => BurnTokenDetails burnTokenDetails) public tokensToBurn;
-
-    /// @notice Mapping of token to buy and token to burn.
-    /// @dev This mapping is used to check if a pair is valid for buyback.
-    mapping(address tokenToBuy => mapping(address tokenToBurn => bool isAPair)) public tokenPairs;
 
     /// @notice Stores cumulative amount of tokens burnt by an address.
     /// @dev We don't need to use order IDs as the difference of `totalAmount` (burnt) on L1
     ///      and `totalAmount` (claimed) on L2 gives us the amount of buy tokens tokens yet to be claimed.
     /// @dev The `totalAmount` for an address would/should NEVER decrease.
     mapping(address depositor => mapping(address tokenToBurn => uint256 totalAmount)) public burntAmountOf;
-
 
     /////////////////////////////////////////////
     //                Modifiers                //
@@ -94,7 +92,6 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
         if (l2Comptroller == address(0)) revert L2ComptrollerNotSet();
         _;
     }
-
 
     /////////////////////////////////////////////
     //                Functions                //
@@ -112,47 +109,46 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @param _crossChainCallGasLimit The gas limit to be passed for a cross chain call
     ///        to the L2Comptroller contract.
     function initialize(
+        address owner,
         ICrossDomainMessenger _crossDomainMessenger,
         uint32 _crossChainCallGasLimit
     ) external initializer {
-        if (
-            address(_crossDomainMessenger) == address(0)
-        ) revert ZeroAddress();
+        if (address(_crossDomainMessenger) == address(0)) revert ZeroAddress();
 
         __Ownable_init();
         __Pausable_init();
 
         crossDomainMessenger = _crossDomainMessenger;
         crossChainCallGasLimit = _crossChainCallGasLimit;
+
+        transferOwnership(owner);
     }
 
     /// @notice Function to burn `amount` of a `token` and claim against it on L2.
-    /// @dev If a transaction passes on L1 but fails on L2 then the user must claim their share on L2 directly.
+    /// @dev - If a transaction passes on L1 but fails on L2 then the user must claim their share on L2 directly.
+    ///      - Note that this function can be called with any `tokenToBuy` passed and it's not validated here.
+    ///        This is safe as long as the total burnt amount is updated in the L2 contract.
+    ///        That way, the user can claim whatever supported token they want on the L2 side.
     /// @param tokenToBuy Address of the token to be claimed.
     /// @param tokenToBurn Address of the token to be burnt.
     /// @param receiver Address of the account which will receive the claim.
     /// @param burnTokenAmount Amount of `tokenToBurn` to be burnt.
     function buyBack(
-        address tokenToBuy,
         address tokenToBurn,
-        address receiver,
-        uint256 burnTokenAmount
+        address tokenToBuy,
+        uint256 burnTokenAmount,
+        address receiver
     ) external whenNotPaused whenL2ComptrollerSet {
-        if(tokenPairs[tokenToBuy][tokenToBurn] == false) revert NotEligibleBuybackPair(tokenToBuy, tokenToBurn);
-
         _burnToken(tokenToBurn, burnTokenAmount);
 
         uint256 totalBurntAmount = burntAmountOf[msg.sender][tokenToBurn] += burnTokenAmount;
 
         // Send a cross chain message to `l2Comptroller` for releasing the buy tokens.
-        // TODO: Modify the following to call a different function in L2 comptroller.
         crossDomainMessenger.sendMessage(
             l2Comptroller,
-            abi.encodeWithSignature(
-                "buyBackFromL1(address,address,uint256)",
-                msg.sender,
-                receiver,
-                totalBurntAmount
+            abi.encodeCall(
+                L2ComptrollerV2.buyBackFromL1,
+                (tokenToBurn, tokenToBuy, totalBurntAmount, msg.sender, receiver)
             ),
             crossChainCallGasLimit
         );
@@ -161,9 +157,9 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     }
 
     function _burnToken(address token, uint256 amount) private {
-        if(tokensToBurn[token].isTokenToBurn == false) revert NotBuybackToken(token);
+        if (tokensToBurn[token].isTokenToBurn == false) revert NotBuybackToken(token);
 
-        if(tokensToBurn[token].isIERC20Burnable) {
+        if (tokensToBurn[token].isIERC20Burnable) {
             IERC20Burnable(token).burnFrom(msg.sender, amount);
         } else {
             // If it's not a natively burnable token then transfer it to the burn address.
@@ -174,6 +170,25 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /////////////////////////////////////////////
     //             Owner Functions             //
     /////////////////////////////////////////////
+
+    /// @notice Function to add multiple burn tokens.
+    /// @param burnTokenSettings Array of BurnTokenSettings to be added.
+    function addBurnTokens(BurnTokenSettings[] memory burnTokenSettings) external onlyOwner {
+        for (uint256 i; i < burnTokenSettings.length; ++i) {
+            addBurnTokens(burnTokenSettings[i]);
+        }
+    }
+
+    /// @notice Function to add a burn token.
+    /// @param burnTokenSettings BurnTokenSettings to be added. This struct includes the token address and the IERC20Burnable support flag.
+    function addBurnTokens(BurnTokenSettings memory burnTokenSettings) public onlyOwner {
+        if (burnTokenSettings.tokenToBurn == address(0)) revert ZeroAddress();
+
+        tokensToBurn[burnTokenSettings.tokenToBurn] = BurnTokenDetails({
+            isTokenToBurn: true,
+            isIERC20Burnable: burnTokenSettings.isERC20Burnable
+        });
+    }
 
     /// @notice Function to set the L2 comptroller address deployed on Optimism.
     /// @dev This function needs to be called after deployment of both the contracts.
@@ -189,10 +204,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Function to withdraw tokens in an emergency situation.
     /// @param token Address of the token to be withdrawn.
     /// @param amount Amount of the `token` to be removed.
-    function emergencyWithdraw(
-        address token,
-        uint256 amount
-    ) external onlyOwner {
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
         IERC20Upgradeable tokenToWithdraw = IERC20Upgradeable(token);
 
         // If the `amount` is max of uint256 then transfer all the available balance.
@@ -212,9 +224,7 @@ contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
     ///      This value is currently 1.92 million gas units. This might not be enough for us.
     ///      Hence this function for modifying the gas limit.
     /// @param newCrossChainGasLimit The new gas amount to be sent to the l2Comptroller for cross chain calls.
-    function setCrossChainGasLimit(
-        uint32 newCrossChainGasLimit
-    ) external onlyOwner {
+    function setCrossChainGasLimit(uint32 newCrossChainGasLimit) external onlyOwner {
         if (newCrossChainGasLimit == 0) revert ZeroValue();
 
         crossChainCallGasLimit = newCrossChainGasLimit;
