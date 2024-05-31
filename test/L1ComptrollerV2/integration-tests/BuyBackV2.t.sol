@@ -14,6 +14,24 @@ contract BuyBackV2 is SetupV2 {
     function setUp() public override {
         super.setUp();
         vm.selectFork(l1ForkId);
+
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L1Comptroller for burn.
+        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 1000e18);
+
+        // Approve the potato swap tokens to the L1Comptroller for burn.
+        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 1000e18);
+
+        changePrank(bob);
+
+        // Approve the MTA tokens to the L1Comptroller for burn.
+        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 1000e18);
+
+        // Approve the potato swap tokens to the L1Comptroller for burn.
+        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 1000e18);
+
+        vm.stopPrank();
     }
 
     function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsSender() public {
@@ -22,12 +40,6 @@ contract BuyBackV2 is SetupV2 {
         uint256 potatoSwapAliceBalanceBefore = POTATO_SWAP.balanceOf(alice);
 
         vm.startPrank(alice);
-
-        // Approve the MTA tokens to the L1Comptroller for burn.
-        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 100e18);
-
-        // Approve the potato swap tokens to the L1Comptroller for burn.
-        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 100e18);
 
         // Expecting 2 calls to be made to the Optimism's cross domain messenger contract on L1
         // with the relevant data.
@@ -86,12 +98,6 @@ contract BuyBackV2 is SetupV2 {
         uint256 potatoSwapAliceBalanceBefore = POTATO_SWAP.balanceOf(alice);
 
         vm.startPrank(alice);
-
-        // Approve the MTA tokens to the L1Comptroller for burn.
-        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 100e18);
-
-        // Approve the potato swap tokens to the L1Comptroller for burn.
-        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 100e18);
 
         // Expecting 2 calls to be made to the Optimism's cross domain messenger contract on L1
         // with the relevant data.
@@ -153,10 +159,6 @@ contract BuyBackV2 is SetupV2 {
 
         vm.startPrank(alice);
 
-        // Approve the burn tokens to the L1Comptroller for burn.
-        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
-        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
-
         L1ComptrollerV2Proxy.buyBack({
             tokenToBurn: address(MTA_L1),
             tokenToBuy: address(USDy),
@@ -195,10 +197,6 @@ contract BuyBackV2 is SetupV2 {
 
         // Impersonate Bob now.
         changePrank(bob);
-
-        // Approve the MTA tokens to the L1Comptroller for burn.
-        MTA_L1.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
-        POTATO_SWAP.safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
 
         L1ComptrollerV2Proxy.buyBack({
             tokenToBurn: address(MTA_L1),
@@ -240,141 +238,274 @@ contract BuyBackV2 is SetupV2 {
         assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(POTATO_SWAP)), 200e18, "Burnt potato swap amount not updated");
     }
 
-    // function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsNotSender() public {
-    //     uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
-    //     uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
-    //     uint256 bobBalanceBefore = tokenToBurnL1.balanceOf(bob);
-    //     address dummyReceiver = makeAddr("dummyReceiver");
+    function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsNotSender() public {
+        address dummyReceiver2 = makeAddr("dummyReceiver2");
 
-    //     vm.startPrank(alice);
+        uint256 mtaTokenSupplyBefore = MTA_L1.totalSupply();
+        uint256 mtaAliceBalanceBefore = MTA_L1.balanceOf(alice);
+        uint256 mtaBobBalanceBefore = MTA_L1.balanceOf(bob);
+        uint256 potatoSwapAliceBalanceBefore = POTATO_SWAP.balanceOf(alice);
+        uint256 potatoSwapBobBalanceBefore = POTATO_SWAP.balanceOf(bob);
 
-    //     // Approve the MTA tokens to the L1Comptroller for burn.
-    //     IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
+        vm.startPrank(alice);
 
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
 
-    //     // Initiate the buy back on L1 again.
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
 
-    //     assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 200e18, "Wrong Alice's balance after burn");
-    //     assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 200e18, "Wrong total supply");
-    //     assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice), 200e18, "Burnt amount not updated");
+        // Initiate the buy back on L1 again.
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
 
-    //     // Impersonate Bob now.
-    //     changePrank(bob);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
 
-    //     // Approve the MTA tokens to the L1Comptroller for burn.
-    //     IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 200e18);
+        assertEq(MTA_L1.balanceOf(alice), mtaAliceBalanceBefore - 200e18, "Wrong Alice's balance after burn");
+        assertEq(MTA_L1.totalSupply(), mtaTokenSupplyBefore - 200e18, "Wrong total supply");
+        assertEq(POTATO_SWAP.balanceOf(alice), potatoSwapAliceBalanceBefore - 200e18, "Wrong Alice's balance after burn");
+        assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 200e18, "Potato swap balance of burn address incorrect");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)), 200e18, "Burnt potato swap amount not updated");
 
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
+        // Impersonate Bob now.
+        changePrank(bob);
 
-    //     // Skipping 10 days arbitrarily.
-    //     skip(10 days);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver2
+        });
 
-    //     // Initiate the buy back on L1 again.
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver2
+        });
 
-    //     assertEq(tokenToBurnL1.balanceOf(bob), bobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
-    //     assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 400e18, "Wrong total supply");
-    //     assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob), 200e18, "Burnt amount not updated");
-    // }
+        // Skipping 10 days arbitrarily.
+        skip(10 days);
 
-    // function test_ShouldBeAbleToBuyBack_WhenZeroBurnAmountGiven() public {
-    //     uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
-    //     uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
+        // Initiate the buy back on L1 again.
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver2
+        });
 
-    //     vm.startPrank(alice);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver2
+        });
 
-    //     // Approve the MTA tokens to the L1Comptroller for burn.
-    //     IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 100e18);
+        assertEq(MTA_L1.balanceOf(bob), mtaBobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
+        assertEq(MTA_L1.totalSupply(), mtaTokenSupplyBefore - 400e18, "Wrong total supply");
+        assertEq(POTATO_SWAP.balanceOf(bob), potatoSwapBobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
+        assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 400e18, "Potato swap balance of burn address incorrect");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(POTATO_SWAP)), 200e18, "Burnt potato swap amount not updated");
+    }
 
-    //     // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
-    //     // with the relevant data.
-    //     vm.expectCall(
-    //         address(L1DomainMessenger),
-    //         abi.encodeCall(
-    //             L1DomainMessenger.sendMessage,
-    //             (
-    //                 address(L2ComptrollerV2Proxy),
-    //                 abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, alice, 0),
-    //                 1_920_000
-    //             )
-    //         )
-    //     );
+    function test_ShouldBeAbleToBuyBack_WhenZeroBurnAmountGiven() public {
+        uint256 mtaTokenSupplyBefore = MTA_L1.totalSupply();
+        uint256 mtaAliceBalanceBefore = MTA_L1.balanceOf(alice);
+        uint256 potatoSwapAliceBalanceBefore = POTATO_SWAP.balanceOf(alice);
+        uint256 burnAddressPotatoSwapBalanceBefore = POTATO_SWAP.balanceOf(BURN_ADDRESS);
 
-    //     L1ComptrollerV2Proxy.buyBack(alice, 0);
+        vm.startPrank(alice);
 
-    //     assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore, "Wrong Alice's balance after burn");
-    //     assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore, "Wrong total supply");
-    //     assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice), 0, "Burnt amount not updated");
-    // }
+        // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
+        // with the relevant data.
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerV2Proxy),
+                    abi.encodeCall(
+                        L2ComptrollerV2.buyBackFromL1,
+                        (address(MTA_L1), address(USDy), 0, alice, alice)
+                    ),
+                    1_920_000
+                )
+            )
+        );
 
-    // // When a user calls the function with 0 given as the `burnTokenAmount` after
-    // // a non-zero value given as `burnTokenAmount`, the call to L2Comptroller should
-    // // be passed with the correct cumulative burn token amount.
-    // function test_ShouldPassCorrectCumulativeAmount_WhenZeroAmountGivenAfterNonZeroAmount() public {
-    //     uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
-    //     uint256 aliceBalanceBefore = tokenToBurnL1.balanceOf(alice);
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerV2Proxy),
+                    abi.encodeCall(
+                        L2ComptrollerV2.buyBackFromL1,
+                        (address(POTATO_SWAP), address(USDpy), 0, alice, alice)
+                    ),
+                    1_920_000
+                )
+            )
+        );
 
-    //     vm.startPrank(alice);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 0,
+            receiver: alice
+        });
 
-    //     // Approve the MTA tokens to the L1Comptroller for burn.
-    //     IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerV2Proxy), 1000e18);
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 0,
+            receiver: alice
+        });
 
-    //     L1ComptrollerV2Proxy.buyBack(alice, 100e18);
+        assertEq(MTA_L1.balanceOf(alice), mtaAliceBalanceBefore, "MTA balance of Alice incorrect after call");
+        assertEq(MTA_L1.totalSupply(), mtaTokenSupplyBefore, "MTA supply wrong after call");
+        assertEq(POTATO_SWAP.balanceOf(alice), potatoSwapAliceBalanceBefore, "Potato swap balance of Alice incorrect after call");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 0, "MTA burnt amount should not be updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)), 0, "Potato swap burnt amount should not be updated");
+        assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), burnAddressPotatoSwapBalanceBefore, "Potato swap balance of burn address incorrect");
+    }
 
-    //     // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
-    //     // with the relevant data.
-    //     vm.expectCall(
-    //         address(L1DomainMessenger),
-    //         abi.encodeCall(
-    //             L1DomainMessenger.sendMessage,
-    //             (
-    //                 address(L2ComptrollerV2Proxy),
-    //                 abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, alice, 100e18),
-    //                 1_920_000
-    //             )
-    //         )
-    //     );
+    // When a user calls the function with 0 given as the `burnTokenAmount` after
+    // a non-zero value given as `burnTokenAmount`, the call to L2Comptroller should
+    // be passed with the correct cumulative burn token amount.
+    function test_ShouldPassCorrectCumulativeAmount_WhenZeroAmountGivenAfterNonZeroAmount() public {
+        uint256 mtaTokenSupplyBefore = MTA_L1.totalSupply();
+        uint256 mtaAliceBalanceBefore = MTA_L1.balanceOf(alice);
+        uint256 potatoSwapAliceBalanceBefore = POTATO_SWAP.balanceOf(alice);
 
-    //     L1ComptrollerV2Proxy.buyBack(alice, 0);
+        vm.startPrank(alice);
 
-    //     assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 100e18, "Wrong Alice's balance after burn");
-    //     assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 100e18, "Wrong total supply");
-    //     assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice), 100e18, "Burnt amount not updated");
-    // }
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: alice
+        });
 
-    // function test_Revert_WhenPaused() public {
-    //     address dummyReceiver = makeAddr("dummyReceiver");
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 100e18,
+            receiver: alice
+        });
 
-    //     // Impersonate the owner of the proxy contract.
-    //     // prank allows for impersonatation only for the next transaction call.
-    //     vm.prank(admin);
+        // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
+        // with the relevant data.
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerV2Proxy),
+                    abi.encodeCall(
+                        L2ComptrollerV2.buyBackFromL1,
+                        (address(MTA_L1), address(USDy), 100e18, alice, alice)
+                    ),
+                    1_920_000
+                )
+            )
+        );
 
-    //     // Pause the L1Comptroller contract (imperosonating admin).
-    //     L1ComptrollerV2Proxy.pause();
+        vm.expectCall(
+            address(L1DomainMessenger),
+            abi.encodeCall(
+                L1DomainMessenger.sendMessage,
+                (
+                    address(L2ComptrollerV2Proxy),
+                    abi.encodeCall(
+                        L2ComptrollerV2.buyBackFromL1,
+                        (address(POTATO_SWAP), address(USDpy), 100e18, alice, alice)
+                    ),
+                    1_920_000
+                )
+            )
+        );
 
-    //     // Expecting revert when buy back is called during paused state.
-    //     vm.expectRevert("Pausable: paused");
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 0,
+            receiver: alice
+        });
 
-    //     vm.prank(alice);
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
-    // }
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            burnTokenAmount: 0,
+            receiver: alice
+        });
 
-    // function test_Revert_WhenL2ComptrollerNotSet() public {
-    //     address dummyReceiver = makeAddr("dummyReceiver");
+        assertEq(MTA_L1.balanceOf(alice), mtaAliceBalanceBefore - 100e18, "MTA balance of Alice incorrect after call");
+        assertEq(MTA_L1.totalSupply(), mtaTokenSupplyBefore - 100e18, "MTA supply wrong after call");
+        assertEq(POTATO_SWAP.balanceOf(alice), potatoSwapAliceBalanceBefore - 100e18, "Potato swap balance of Alice incorrect after call");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 100e18, "MTA burnt amount should be updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)), 100e18, "Potato swap burnt amount should be updated");
+        assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 100e18, "Potato swap balance of burn address incorrect");
+    }
 
-    //     // Find the slot of the `L2Comptroller` storage variable in the `L1Comptroller` contract.
-    //     uint256 slot = stdstore.target(L1ComptrollerImplementation).sig("l2Comptroller()").find();
+    function test_Revert_WhenPaused() public {
+        // Impersonate the owner of the proxy contract.
+        // prank allows for impersonatation only for the next transaction call.
+        vm.startPrank(admin);
 
-    //     // Modify the storage slot to set the `L2Comptroller` variable to address(0).
-    //     vm.store(address(L1ComptrollerV2Proxy), bytes32(slot), bytes32(uint256(0)));
+        // Pause the L1Comptroller contract (imperosonating admin).
+        L1ComptrollerV2Proxy.pause();
 
-    //     // Impersonate as Alice and call the `buyBack` function.
-    //     // We are expecting this call to revert as L2Comptroller is not set.
-    //     vm.prank(alice);
-    //     vm.expectRevert(L1Comptroller.L2ComptrollerNotSet.selector);
+        // Expecting revert when buy back is called during paused state.
+        vm.expectRevert("Pausable: paused");
 
-    //     L1ComptrollerV2Proxy.buyBack(dummyReceiver, 100e18);
-    // }
+        changePrank(alice);
+
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
+    }
+
+    function test_Revert_WhenL2ComptrollerNotSet() public {
+        // Find the slot of the `L2Comptroller` storage variable in the `L1Comptroller` contract.
+        uint256 slot = stdstore.target(L1ComptrollerV2Implementation).sig("l2Comptroller()").find();
+
+        // Modify the storage slot to set the `L2Comptroller` variable to address(0).
+        vm.store(address(L1ComptrollerV2Proxy), bytes32(slot), bytes32(uint256(0)));
+
+        // Impersonate as Alice and call the `buyBack` function.
+        // We are expecting this call to revert as L2Comptroller is not set.
+        vm.startPrank(alice);
+        vm.expectRevert(L1ComptrollerV2.L2ComptrollerNotSet.selector);
+
+        L1ComptrollerV2Proxy.buyBack({
+            tokenToBurn: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            burnTokenAmount: 100e18,
+            receiver: dummyReceiver
+        });
+    }
 }
