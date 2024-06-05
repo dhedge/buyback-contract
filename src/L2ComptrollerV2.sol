@@ -142,9 +142,9 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     ///      from the l1Comptroller contract on L1.
     /// @param tokenBurned Address of the token burnt on L1.
     /// @param tokenToBuy Address of the token to be bought.
+    /// @param totalAmountBurntOnL1 Cumulative sum of tokens burnt on L1 by `l1Depositor`.
     /// @param l1Depositor The address which burned `totalAmountBurntOnL1` of `tokenToBurn` on L1.
     /// @param receiver Address of the receiver of the `tokenToBuy`.
-    /// @param totalAmountBurntOnL1 Cumulative sum of tokens burnt on L1 by `l1Depositor`.
     function buyBackFromL1(
         address tokenBurned,
         address tokenToBuy,
@@ -214,6 +214,9 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to claim all the claimable `tokenToBuy` tokens of a depositor.
+    /// @param tokenBurned Address of the token burnt on L1.
+    /// @param tokenToBuy Address of the token to be bought.
+    /// @param receiver Address of the receiver of the `tokenToBuy`.
     /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
     function claimAll(address tokenBurned, IPoolLogic tokenToBuy, address receiver) external {
         // The difference between burnt amount and previously claimed amount gives us
@@ -228,8 +231,10 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to claim any `amount` of `tokenToBuy` on L2.
-    /// @param receiver Receiver of the `tokenToBuy` claim.
+    /// @param tokenBurned Address of the token burnt on L1.
+    /// @param tokenToBuy Address of the token to be bought.
     /// @param burnTokenAmount Amount of `tokenToBurn` to claim against.
+    /// @param receiver Receiver of the `tokenToBuy` claim.
     /// @dev Use `convertToTokenToBurn` to get the proper `amount`.
     function claim(
         address tokenBurned,
@@ -263,7 +268,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @dev Although this is marked as an external function, it is meant to be only called by this contract.
-    ///      The naming convention is deliberately unfollowed to semantically enforce the meaning.
+    ///      The naming convention is ignored to semantically enforce the meaning.
     // solhint-disable-next-line private-vars-leading-underscore
     function _buyBack(
         address tokenBurned,
@@ -305,6 +310,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to get the amount of `tokenToBurn` that should be burned to
     ///         receive `amount` of `tokenToBuy`.
+    /// @param tokenToBurn Address of the token burned on L1.
     /// @param tokenToBuy `tokenToBuy` token address.
     /// @param buyTokenAmount `tokenToBuy` amount to be converted.
     /// @return burnTokenAmount Amount converted to `tokenToBurn`.
@@ -331,6 +337,8 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to get the amount of `tokenToBuy` claimable by a depositor.
     /// @dev A depositor is an address which has burnt tokens on L1 (using l1Comptroller).
+    /// @param tokenBurned Address of the token burnt on L1.
+    /// @param tokenToBuy `tokenToBuy` token address.
     /// @param depositor Address of the account which burnt tokens on L1.
     /// @return tokenToBuyClaimable The amount claimable by `depositor` in `tokenToBuy` denomination.
     function getClaimableAmount(
@@ -353,6 +361,8 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @dev This contract is expected to be containing a limited amount of `tokenToBuy` to begin with
     ///      and thus, we provide this function to calculate how much amount of `tokenToBurn` can be
     ///      claimable immediately.
+    /// @param tokenToBurn Address of the token burned on L1.
+    /// @param tokenToBuy `tokenToBuy` token address.
     /// @return maxBurnTokenAmount Maximum `tokenToBurn` amount that can be burned.
     function maxBurnAmountClaimable(
         address tokenToBurn,
@@ -427,6 +437,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to modify the acceptable deviation from the last recorded price
     ///         of the `tokenToBuy`.
+    /// @param tokenToBuy Address of the token to be modified.
     /// @param newMaxTokenPriceDrop New value for deviation.
     function modifyThreshold(IPoolLogic tokenToBuy, uint256 newMaxTokenPriceDrop) external onlyOwner {
         buyTokenDetails[tokenToBuy].maxTokenPriceDrop = newMaxTokenPriceDrop;

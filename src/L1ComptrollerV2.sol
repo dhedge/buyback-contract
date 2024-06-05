@@ -60,6 +60,7 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     //                Variables                //
     /////////////////////////////////////////////
 
+    /// @notice The address used to send tokens to be burnt in case the token is not natively burnable.
     address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     /// @notice The Optimism contract to interact with on L1 Ethereum for sending data using smart contracts.
@@ -131,8 +132,8 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     ///        That way, the user can claim whatever supported token they want on the L2 side.
     /// @param tokenToBuy Address of the token to be claimed.
     /// @param tokenToBurn Address of the token to be burnt.
-    /// @param receiver Address of the account which will receive the claim.
     /// @param burnTokenAmount Amount of `tokenToBurn` to be burnt.
+    /// @param receiver Address of the account which will receive the claim.
     function buyBack(
         address tokenToBurn,
         address tokenToBuy,
