@@ -16,11 +16,13 @@ contract BuyBackFuzz is Setup {
     function setUp() public override {
         super.setUp();
         vm.selectFork(l2ForkId);
+
+        // Since the tests rely on the ample availability buy token amount, we just assign the
+        // L2Comptroller with unlimited buy token amount.
+        deal(address(tokenToBuy), address(L2ComptrollerProxy), type(uint256).max);
     }
 
-    function testFuzz_ShouldBeAbleToBuyback_WhenReceiverIsSender(
-        uint256 tokenToBurnAmount
-    ) public {
+    function testFuzz_ShouldBeAbleToBuyback_WhenReceiverIsSender(uint256 tokenToBurnAmount) public {
         uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
@@ -29,26 +31,17 @@ contract BuyBackFuzz is Setup {
         deal(address(tokenToBurnL2), alice, tokenToBurnAmount);
 
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
-        uint256 burnMultiSigBalanceBefore = tokenToBurnL2.balanceOf(
-            burnMultiSig
-        );
+        uint256 burnMultiSigBalanceBefore = tokenToBurnL2.balanceOf(burnMultiSig);
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
 
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L2Comptroller for buyback.
-        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
-            address(L2ComptrollerProxy),
-            tokenToBurnAmount
-        );
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(address(L2ComptrollerProxy), tokenToBurnAmount);
 
-        uint256 buyTokenAmount = L2ComptrollerProxy.buyBack(
-            alice,
-            tokenToBurnAmount
-        );
-        uint256 expectedBuyTokenAmount = (tokenToBurnAmount * exchangePrice) /
-            buyTokenPrice;
+        uint256 buyTokenAmount = L2ComptrollerProxy.buyBack(alice, tokenToBurnAmount);
+        uint256 expectedBuyTokenAmount = (tokenToBurnAmount * exchangePrice) / buyTokenPrice;
 
         assertEq(
             tokenToBurnL2.balanceOf(burnMultiSig),
@@ -56,16 +49,8 @@ contract BuyBackFuzz is Setup {
             "Wrong balance of burn multisig"
         );
 
-        assertEq(
-            tokenToBurnL2.balanceOf(alice),
-            0,
-            "Wrong tokenToBurn balance of Alice"
-        );
-        assertEq(
-            buyTokenAmount,
-            expectedBuyTokenAmount,
-            "Wrong calculation after buyback"
-        );
+        assertEq(tokenToBurnL2.balanceOf(alice), 0, "Wrong tokenToBurn balance of Alice");
+        assertEq(buyTokenAmount, expectedBuyTokenAmount, "Wrong calculation after buyback");
         assertEq(
             aliceBuyTokenBalanceBefore + expectedBuyTokenAmount,
             tokenToBuy.balanceOf(alice),
@@ -73,9 +58,7 @@ contract BuyBackFuzz is Setup {
         );
     }
 
-    function testFuzz_ShouldBeAbleToBuyback_WhenReceiverIsNotSender(
-        uint256 tokenToBurnAmount
-    ) public {
+    function testFuzz_ShouldBeAbleToBuyback_WhenReceiverIsNotSender(uint256 tokenToBurnAmount) public {
         uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
 
         // Make sure the fuzzer gives amount less than the token supply.
@@ -85,26 +68,17 @@ contract BuyBackFuzz is Setup {
 
         address dummyReceiver = makeAddr("dummyReceiver");
         uint256 aliceBuyTokenBalanceBefore = tokenToBuy.balanceOf(alice);
-        uint256 burnMultiSigBalanceBefore = tokenToBurnL2.balanceOf(
-            burnMultiSig
-        );
+        uint256 burnMultiSigBalanceBefore = tokenToBurnL2.balanceOf(burnMultiSig);
         uint256 exchangePrice = L2ComptrollerProxy.exchangePrice();
         uint256 buyTokenPrice = tokenToBuy.tokenPrice();
 
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L2Comptroller for buyback.
-        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
-            address(L2ComptrollerProxy),
-            tokenToBurnAmount
-        );
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(address(L2ComptrollerProxy), tokenToBurnAmount);
 
-        uint256 buyTokenAmount = L2ComptrollerProxy.buyBack(
-            dummyReceiver,
-            tokenToBurnAmount
-        );
-        uint256 expectedBuyTokenAmount = (tokenToBurnAmount * exchangePrice) /
-            buyTokenPrice;
+        uint256 buyTokenAmount = L2ComptrollerProxy.buyBack(dummyReceiver, tokenToBurnAmount);
+        uint256 expectedBuyTokenAmount = (tokenToBurnAmount * exchangePrice) / buyTokenPrice;
 
         assertEq(
             tokenToBurnL2.balanceOf(burnMultiSig),
@@ -112,35 +86,15 @@ contract BuyBackFuzz is Setup {
             "Wrong balance of burn multisig"
         );
 
-        assertEq(
-            tokenToBurnL2.balanceOf(alice),
-            0,
-            "Wrong tokenToBurn balance of Alice"
-        );
-        assertEq(
-            buyTokenAmount,
-            expectedBuyTokenAmount,
-            "Wrong calculation after buyback"
-        );
-        assertEq(
-            expectedBuyTokenAmount,
-            tokenToBuy.balanceOf(dummyReceiver),
-            "Wrong buy token amount received"
-        );
-        assertEq(
-            aliceBuyTokenBalanceBefore,
-            tokenToBuy.balanceOf(alice),
-            "Alice shouldn't have received buy tokens"
-        );
+        assertEq(tokenToBurnL2.balanceOf(alice), 0, "Wrong tokenToBurn balance of Alice");
+        assertEq(buyTokenAmount, expectedBuyTokenAmount, "Wrong calculation after buyback");
+        assertEq(expectedBuyTokenAmount, tokenToBuy.balanceOf(dummyReceiver), "Wrong buy token amount received");
+        assertEq(aliceBuyTokenBalanceBefore, tokenToBuy.balanceOf(alice), "Alice shouldn't have received buy tokens");
     }
 
-    function testFuzz_ShouldUpdateBuyTokenPriceCorrectly(
-        uint256 tokenToBurnAmount,
-        uint256 modifiedTokenPrice
-    ) public {
+    function testFuzz_ShouldUpdateBuyTokenPriceCorrectly(uint256 tokenToBurnAmount, uint256 modifiedTokenPrice) public {
         uint256 tokenSupplyBefore = tokenToBurnL2.totalSupply();
-        uint256 latestTokenToBuyPrice = L2ComptrollerProxy
-            .lastTokenToBuyPrice();
+        uint256 latestTokenToBuyPrice = L2ComptrollerProxy.lastTokenToBuyPrice();
 
         // Make sure the fuzzer gives amount less than the token supply.
         tokenToBurnAmount = bound(tokenToBurnAmount, 1, tokenSupplyBefore);
@@ -148,41 +102,27 @@ contract BuyBackFuzz is Setup {
         // Make sure that the fuzzer gives an amount which doesn't trigger the PriceDropExceedsLimit error.
         modifiedTokenPrice = bound(
             modifiedTokenPrice,
-            latestTokenToBuyPrice - (latestTokenToBuyPrice * L2ComptrollerProxy.maxTokenPriceDrop()) /
+            latestTokenToBuyPrice -
+                (latestTokenToBuyPrice * L2ComptrollerProxy.maxTokenPriceDrop()) /
                 L2ComptrollerProxy.DENOMINATOR(),
             type(uint256).max
         );
 
         deal(address(tokenToBurnL2), alice, tokenToBurnAmount);
 
-        vm.mockCall(
-            address(tokenToBuy),
-            abi.encodeWithSignature("tokenPrice()"),
-            abi.encode(modifiedTokenPrice)
-        );
+        vm.mockCall(address(tokenToBuy), abi.encodeWithSignature("tokenPrice()"), abi.encode(modifiedTokenPrice));
 
-        assertEq(
-            tokenToBuy.tokenPrice(),
-            modifiedTokenPrice,
-            "Token price not modified"
-        );
+        assertEq(tokenToBuy.tokenPrice(), modifiedTokenPrice, "Token price not modified");
 
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L2Comptroller for buyback.
-        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(
-            address(L2ComptrollerProxy),
-            tokenToBurnAmount
-        );
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(address(L2ComptrollerProxy), tokenToBurnAmount);
 
         L2ComptrollerProxy.buyBack(alice, tokenToBurnAmount);
 
         if (latestTokenToBuyPrice < modifiedTokenPrice) {
-            assertEq(
-                L2ComptrollerProxy.lastTokenToBuyPrice(),
-                modifiedTokenPrice,
-                "Latest buy token price changed"
-            );
+            assertEq(L2ComptrollerProxy.lastTokenToBuyPrice(), modifiedTokenPrice, "Latest buy token price changed");
         }
     }
 }
