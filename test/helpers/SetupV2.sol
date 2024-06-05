@@ -43,6 +43,8 @@ abstract contract SetupV2 is Test {
 
     IERC20Upgradeable internal POTATO_SWAP = IERC20Upgradeable(0x907FeB27f8cc5b003Db7e62dfc2f9B01ce3FADd6);
 
+    uint32 internal constant CROSS_CHAIN_GAS_LIMIT = 1_920_000;
+
     L1ComptrollerV2 internal L1ComptrollerV2Proxy;
     L2ComptrollerV2 internal L2ComptrollerV2Proxy;
     address internal L1ComptrollerV2Implementation;
@@ -78,7 +80,7 @@ abstract contract SetupV2 is Test {
                 new TransparentUpgradeableProxy(
                     L1ComptrollerV2Implementation,
                     proxyAdmin,
-                    abi.encodeCall(L1ComptrollerV2.initialize, (admin, L1DomainMessenger, uint32(1_920_000)))
+                    abi.encodeCall(L1ComptrollerV2.initialize, (admin, L1DomainMessenger, CROSS_CHAIN_GAS_LIMIT))
                 )
             )
         );
@@ -125,12 +127,12 @@ abstract contract SetupV2 is Test {
         L2ComptrollerV2Proxy.setL1Comptroller(address(L1ComptrollerV2Proxy));
 
         // Set the exchange prices of the burn tokens.
-        L2ComptrollerV2Proxy.setExchangePrice(L2ComptrollerV2.BurnTokenSettings({
+        L2ComptrollerV2Proxy.setExchangePrices(L2ComptrollerV2.BurnTokenSettings({
             tokenToBurn: address(MTA_L1),
             exchangePrice: 0.03e18
         }));
 
-        L2ComptrollerV2Proxy.setExchangePrice(L2ComptrollerV2.BurnTokenSettings({
+        L2ComptrollerV2Proxy.setExchangePrices(L2ComptrollerV2.BurnTokenSettings({
             tokenToBurn: address(POTATO_SWAP),
             exchangePrice: 1e18
         }));

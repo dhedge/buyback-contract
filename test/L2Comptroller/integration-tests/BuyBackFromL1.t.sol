@@ -2,11 +2,14 @@
 pragma solidity 0.8.18;
 
 import {Setup} from "../../helpers/Setup.sol";
+import {Encoding} from "../../helpers/Encoding.sol";
+
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
 import {L1Comptroller} from "../../../src/L1Comptroller.sol";
 import {L2Comptroller} from "../../../src/L2Comptroller.sol";
 import {ICrossDomainMessenger} from "../../../src/interfaces/ICrossDomainMessenger.sol";
+
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -25,24 +28,32 @@ library AddressAliasHelper {
 
 /**
  * @title ICrossDomainMessenger
- * @dev Interface taken from: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/bridge/ICrossDomainMessenger.sol
+ * @dev Interface modified and taken from: https://github.com/ethereum-optimism/optimism/blob/e6ef3a900c42c8722e72c2e2314027f85d12ced5/packages/contracts-bedrock/src/universal/CrossDomainMessenger.sol#L87
  */
 interface ICrossDomainMessengerMod is ICrossDomainMessenger {
-    function l1CrossDomainMessenger() external view returns (address);
+    /// @notice Retrieves the address of the paired CrossDomainMessenger contract on the other chain
+    ///         Public getter is legacy and will be removed in the future. Use `otherMessenger()` instead.
+    /// @return CrossDomainMessenger contract on the other chain.
+    /// @custom:legacy
+    function OTHER_MESSENGER() external view returns (address);
 
-    /**
-     * Relays a cross domain message to a contract.
-     * @param _target Target contract address.
-     * @param _sender Message sender address.
-     * @param _message Message to send to the target.
-     * @param _messageNonce Nonce for the provided message.
-     */
+    /// @notice Relays a message that was sent by the other CrossDomainMessenger contract. Can only
+    ///         be executed via cross-chain call from the other messenger OR if the message was
+    ///         already received once and is currently being replayed.
+    /// @param _nonce       Nonce of the message being relayed.
+    /// @param _sender      Address of the user who sent the message.
+    /// @param _target      Address that the message is targeted at.
+    /// @param _value       ETH value to send with the message.
+    /// @param _minGasLimit Minimum amount of gas that the message can be executed with.
+    /// @param _message     Message to send to the target.
     function relayMessage(
-        address _target,
+        uint256 _nonce,
         address _sender,
-        bytes memory _message,
-        uint256 _messageNonce
-    ) external;
+        address _target,
+        uint256 _value,
+        uint256 _minGasLimit,
+        bytes calldata _message
+    ) external payable;
 }
 
 contract BuyBackFromL1 is Setup {
@@ -439,36 +450,41 @@ contract BuyBackFromL1 is Setup {
 
         // Send two txs, one for 1e18 totalBurned and one for 2e18 totalBurned.
         address aliasedXDM = AddressAliasHelper.applyL1ToL2Alias(
-            l2xdm.l1CrossDomainMessenger()
+            l2xdm.OTHER_MESSENGER()
         );
-        uint nonce100 = uint(keccak256(abi.encode("nonce100")));
-        uint nonce200 = uint(keccak256(abi.encode("nonce200")));
+
+        uint256 nonce100 = Encoding.encodeVersionedNonce({ _nonce: 100, _version: 1 });
+        uint256 nonce200 = Encoding.encodeVersionedNonce({ _nonce: 200, _version: 1 });
 
         vm.startPrank(aliasedXDM);
 
-        l2xdm.relayMessage(
-            address(L1ComptrollerProxy), // L1Comptroller
-            address(L2ComptrollerProxy), // L2Comptroller
-            abi.encodeWithSignature(
+        l2xdm.relayMessage({
+            _nonce: nonce100,
+            _sender: address(L1ComptrollerProxy),
+            _target: address(L2ComptrollerProxy),
+            _value: 0,
+            _minGasLimit: 0,
+            _message: abi.encodeWithSignature(
                 "buyBackFromL1(address,address,uint256)",
                 alice,
                 alice,
                 1e18
-            ),
-            nonce100
-        );
+            )
+        });
 
-        l2xdm.relayMessage(
-            address(L1ComptrollerProxy), // L1Comptroller
-            address(L2ComptrollerProxy), // L2Comptroller
-            abi.encodeWithSignature(
+        l2xdm.relayMessage({
+            _nonce: nonce200,
+            _sender: address(L1ComptrollerProxy),
+            _target: address(L2ComptrollerProxy),
+            _value: 0,
+            _minGasLimit: 0,
+            _message: abi.encodeWithSignature(
                 "buyBackFromL1(address,address,uint256)",
                 alice,
                 alice,
                 2e18
-            ),
-            nonce200
-        );
+            )
+        });
 
         vm.stopPrank();
 
@@ -477,32 +493,36 @@ contract BuyBackFromL1 is Setup {
         L2ComptrollerProxy.unpause();
 
         // Execute the 2e18 transaction first, and then the 1e18 transaction.
-        // In OP Bedrock upgrade, anyone can call this, but on old OP system we need to prank aliased XDM.
-        // These will be saved as unclaimed on contract because there are no funds to pay.
-        vm.startPrank(aliasedXDM);
+        // In OP Bedrock upgrade, anyone can call this (except the XDM), but on old OP system we need to prank aliased XDM.
+        vm.startPrank(admin);
 
-        l2xdm.relayMessage(
-            address(L1ComptrollerProxy), // L1Comptroller
-            address(L2ComptrollerProxy), // L2Comptroller
-            abi.encodeWithSignature(
+        l2xdm.relayMessage({
+            _nonce: nonce200,
+            _sender: address(L1ComptrollerProxy),
+            _target: address(L2ComptrollerProxy),
+            _value: 0,
+            _minGasLimit: 0,
+            _message: abi.encodeWithSignature(
                 "buyBackFromL1(address,address,uint256)",
                 alice,
                 alice,
                 2e18
-            ),
-            nonce200
-        );
-        l2xdm.relayMessage(
-            address(L1ComptrollerProxy), // L1Comptroller
-            address(L2ComptrollerProxy), // L2Comptroller
-            abi.encodeWithSignature(
+            )
+        });
+
+        l2xdm.relayMessage({
+            _nonce: nonce100,
+            _sender: address(L1ComptrollerProxy),
+            _target: address(L2ComptrollerProxy),
+            _value: 0,
+            _minGasLimit: 0,
+            _message: abi.encodeWithSignature(
                 "buyBackFromL1(address,address,uint256)",
                 alice,
                 alice,
                 1e18
-            ),
-            nonce100
-        );
+            )
+        });
 
         vm.stopPrank();
 

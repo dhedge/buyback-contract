@@ -6,20 +6,6 @@ pragma solidity >0.5.0 <0.9.0;
  * @dev Interface taken from: https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts/contracts/libraries/bridge/ICrossDomainMessenger.sol
  */
 interface ICrossDomainMessenger {
-    /**********
-     * Events *
-     **********/
-
-    event SentMessage(
-        address indexed target,
-        address sender,
-        bytes message,
-        uint256 messageNonce,
-        uint256 gasLimit
-    );
-    event RelayedMessage(bytes32 indexed msgHash);
-    event FailedRelayedMessage(bytes32 indexed msgHash);
-
     /*************
      * Variables *
      *************/
