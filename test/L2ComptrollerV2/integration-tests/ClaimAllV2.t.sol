@@ -8,6 +8,9 @@ import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
+/// @dev All tests containing "DifferentBuyToken" in their name check if a user is able to claim/buy a different token than the one they intended to buy
+/// when they burnt a token on L1. Example, let's say the buyback request for MTA -> USDy failed (not enough buy tokens on L2), but
+/// the user should still be able to claim USDpy instead of USDy in case there is enough USDpy buy tokens on L2.
 contract ClaimAllV2 is SetupV2 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using stdStorage for StdStorage;
@@ -83,6 +86,108 @@ contract ClaimAllV2 is SetupV2 {
         L2ComptrollerV2Proxy.claimAll({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
+            receiver: alice
+        });
+
+        assertEq(
+            aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount,
+            USDy.balanceOf(alice),
+            "Alice's USDy balance incorrect"
+        );
+        assertEq(
+            aliceUSDpyBuyTokenBalanceBefore + usdpyExpectedBuyTokenAmount,
+            USDpy.balanceOf(alice),
+            "Alice's USDpy balance incorrect"
+        );
+        assertEq(
+            1000e18 - usdyExpectedBuyTokenAmount,
+            USDy.balanceOf(address(L2ComptrollerV2Proxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+        assertEq(
+            1000e18 - usdpyExpectedBuyTokenAmount,
+            USDpy.balanceOf(address(L2ComptrollerV2Proxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+
+        (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
+            address(MTA_L1)
+        );
+        (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
+            address(POTATO_SWAP)
+        );
+
+        assertEq(aliceTotalUSDyClaimed, 100e18, "Alice's USDy claimed amount incorrect");
+        assertEq(aliceTotalUSDyBurned, 100e18, "Alice's USDy burnt amount incorrect");
+        assertEq(aliceTotalUSDpyClaimed, 100e18, "Alice's USDpy claimed amount incorrect");
+        assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
+    }
+
+    function test_ShouldBeAbleToClaimAllOnL2_DifferentBuyToken_WhenBuyBackFromL1Fails()
+        public
+    {
+        vm.startPrank(address(L2DomainMessenger));
+
+        // This makes the tokenToBuy balanceOf L2ComptrollerV2Proxy 0.
+        deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
+        deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
+
+        uint256 aliceUSDyBuyTokenBalanceBefore = USDy.balanceOf(alice);
+        uint256 aliceUSDpyBuyTokenBalanceBefore = USDpy.balanceOf(alice);
+
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // we need the L2DomainMessenger to report the correct cross-chain caller.
+        vm.mockCall(
+            address(L2DomainMessenger),
+            abi.encodeWithSignature("xDomainMessageSender()"),
+            abi.encode(address(L1ComptrollerV2Proxy))
+        );
+
+        // Expecting a revert as there aren't enough tokens in L2Comptroller.
+        // Since the try/catch block will handle the error, we are checking for the event emission instead.
+        vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
+
+        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        changePrank(alice);
+
+        deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
+        deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
+
+        // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
+        // So calculate the expected buy token amount for USDy and USDpy.
+        uint256 usdyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
+            USDy.tokenPrice();
+        uint256 usdpyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
+            USDpy.tokenPrice();
+
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: USDpy,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: USDy,
             receiver: alice
         });
 
@@ -257,6 +362,141 @@ contract ClaimAllV2 is SetupV2 {
         assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
     }
 
+    function test_ShouldBeAbleToClaimAllCorrectly_DifferentBuyToken_AfterPartialClaims() public {
+        vm.startPrank(address(L2DomainMessenger));
+
+        // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 2e18.
+        deal(address(USDy), address(L2ComptrollerV2Proxy), 2e18);
+        deal(address(USDpy), address(L2ComptrollerV2Proxy), 2e18);
+
+        uint256 aliceUSDyBuyTokenBalanceBefore = USDy.balanceOf(alice);
+        uint256 aliceUSDpyBuyTokenBalanceBefore = USDpy.balanceOf(alice);
+
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // we need the L2DomainMessenger to report the correct cross-chain caller.
+        vm.mockCall(
+            address(L2DomainMessenger),
+            abi.encodeWithSignature("xDomainMessageSender()"),
+            abi.encode(address(L1ComptrollerV2Proxy))
+        );
+
+        // Expecting a revert as there aren't enough tokens in L2Comptroller.
+        // Since the try/catch block will handle the error, we are checking for the event emission instead.
+        vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
+
+        emit RequireErrorDuringBuyBack(
+            alice,
+            "ERC20: transfer amount exceeds balance"
+        );
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        // Expecting a revert as there aren't enough tokens in L2Comptroller.
+        // Since the try/catch block will handle the error, we are checking for the event emission instead.
+        vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
+
+        emit RequireErrorDuringBuyBack(
+            alice,
+            "ERC20: transfer amount exceeds balance"
+        );
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        changePrank(alice);
+
+        // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
+        // So calculate the expected buy token amount for USDy and USDpy.
+        uint256 usdyExpectedBuyTokenAmount1 = (70e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
+            USDy.tokenPrice();
+        uint256 usdpyExpectedBuyTokenAmount1 = (70e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
+            USDpy.tokenPrice();
+
+        // Balance of comptroller for buy tokens is now 1000e18.
+        deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
+        deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
+
+
+        L2ComptrollerV2Proxy.claim({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: USDpy,
+            burnTokenAmount: 70e18,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.claim({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: USDy,
+            burnTokenAmount: 70e18,
+            receiver: alice
+        });
+
+        // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
+        // So calculate the expected buy token amount for USDy and USDpy.
+        uint256 usdyExpectedBuyTokenAmount2 = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
+            USDy.tokenPrice();
+        uint256 usdpyExpectedBuyTokenAmount2 = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
+            USDpy.tokenPrice();
+        
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: USDpy,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: USDy,
+            receiver: alice
+        });
+
+        assertEq(
+            aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount1 + usdyExpectedBuyTokenAmount2,
+            USDy.balanceOf(alice),
+            "Alice's USDy balance incorrect"
+        );
+        assertEq(
+            aliceUSDpyBuyTokenBalanceBefore + usdpyExpectedBuyTokenAmount1 + usdpyExpectedBuyTokenAmount2,
+            USDpy.balanceOf(alice),
+            "Alice's USDpy balance incorrect"
+        );
+        assertEq(
+            1000e18 - usdyExpectedBuyTokenAmount1 - usdyExpectedBuyTokenAmount2,
+            USDy.balanceOf(address(L2ComptrollerV2Proxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+        assertEq(
+            1000e18 - usdpyExpectedBuyTokenAmount1 - usdpyExpectedBuyTokenAmount2,
+            USDpy.balanceOf(address(L2ComptrollerV2Proxy)),
+            "Comptroller's buy token balance incorrect"
+        );
+
+        (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
+            address(MTA_L1)
+        );
+        (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
+            address(POTATO_SWAP)
+        );
+
+        assertEq(aliceTotalUSDyClaimed, 100e18, "Alice's USDy claimed amount incorrect");
+        assertEq(aliceTotalUSDyBurned, 100e18, "Alice's USDy burnt amount incorrect");
+        assertEq(aliceTotalUSDpyClaimed, 100e18, "Alice's USDpy claimed amount incorrect");
+        assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
+    }
+
     function test_Revert_WhenAlreadyClaimedAll() public {
         vm.startPrank(address(L2DomainMessenger));
 
@@ -317,6 +557,70 @@ contract ClaimAllV2 is SetupV2 {
         L2ComptrollerV2Proxy.claimAll({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
+            receiver: alice
+        });
+    }
+
+    function test_Revert_DifferentBuyToken_WhenAlreadyClaimedAll() public {
+        vm.startPrank(address(L2DomainMessenger));
+
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // we need the L2DomainMessenger to report the correct cross-chain caller.
+        vm.mockCall(
+            address(L2DomainMessenger),
+            abi.encodeWithSignature("xDomainMessageSender()"),
+            abi.encode(address(L1ComptrollerV2Proxy))
+        );
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.buyBackFromL1({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        changePrank(alice);
+
+        // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                alice,
+                address(MTA_L1),
+                0,
+                0
+            )
+        );
+
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: USDpy,
+            receiver: alice
+        });
+
+        // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                alice,
+                address(POTATO_SWAP),
+                0,
+                0
+            )
+        );
+
+        L2ComptrollerV2Proxy.claimAll({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: USDy,
             receiver: alice
         });
     }
