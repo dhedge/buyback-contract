@@ -18,27 +18,13 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /////////////////////////////////////////////
-    //                  Structs                //
-    /////////////////////////////////////////////
-
-    struct BurnTokenDetails {
-        bool isTokenToBurn;
-        bool isIERC20Burnable;
-    }
-
-    struct BurnTokenSettings {
-        address tokenToBurn;
-        bool isERC20Burnable;
-    }
-
-    /////////////////////////////////////////////
     //                  Events                 //
     /////////////////////////////////////////////
 
     event L2ComptrollerSet(address newL2Comptroller);
     event CrossChainGasLimitModified(uint256 newCrossChainGasLimit);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
-    event BuyBackFromL1Initiated(
+    event RedeemFromL1Initiated(
         address indexed depositor,
         address indexed tokenToBurn,
         address indexed receiver,
@@ -53,8 +39,10 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     error ZeroAddress();
     error ZeroValue();
     error L2ComptrollerNotSet();
-    error NotBuybackToken(address token);
+    error NonRedeemableToken(address token);
     error TokenCannotBeBought(address token);
+    event BurnTokenAdded(address token);
+    event BurnTokenRemoved(address token);
 
     /////////////////////////////////////////////
     //                Variables                //
@@ -76,7 +64,7 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Mapping of token to be burnt and its details.
     /// @dev Note that we are not enforcing that the `token` be a burnable token.
     ///      We can write different functions depending on the token type.
-    mapping(address token => BurnTokenDetails burnTokenDetails) public tokensToBurn;
+    mapping(address token => bool burnable) public tokensToBurn;
 
     /// @notice Stores cumulative amount of tokens burnt by an address.
     /// @dev We don't need to use order IDs as the difference of `totalAmount` (burnt) on L1
@@ -106,6 +94,7 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to initialize this contract.
+    /// @param owner The owner of the contract.
     /// @param _crossDomainMessenger The cross domain messenger contract on L1.
     /// @param _crossChainCallGasLimit The gas limit to be passed for a cross chain call
     ///        to the L2Comptroller contract.
@@ -130,11 +119,11 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     ///      - Note that this function can be called with any `tokenToBuy` passed and it's not validated here.
     ///        This is safe as long as the total burnt amount is updated in the L2 contract.
     ///        That way, the user can claim whatever supported token they want on the L2 side.
-    /// @param tokenToBuy Address of the token to be claimed.
     /// @param tokenToBurn Address of the token to be burnt.
+    /// @param tokenToBuy Address of the token to be claimed.
     /// @param burnTokenAmount Amount of `tokenToBurn` to be burnt.
     /// @param receiver Address of the account which will receive the claim.
-    function buyBack(
+    function redeem(
         address tokenToBurn,
         address tokenToBuy,
         uint256 burnTokenAmount,
@@ -148,24 +137,20 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         crossDomainMessenger.sendMessage(
             l2Comptroller,
             abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (tokenToBurn, tokenToBuy, totalBurntAmount, msg.sender, receiver)
             ),
             crossChainCallGasLimit
         );
 
-        emit BuyBackFromL1Initiated(msg.sender, tokenToBurn, receiver, burnTokenAmount, totalBurntAmount);
+        emit RedeemFromL1Initiated(msg.sender, tokenToBurn, receiver, burnTokenAmount, totalBurntAmount);
     }
 
     function _burnToken(address token, uint256 amount) private {
-        if (tokensToBurn[token].isTokenToBurn == false) revert NotBuybackToken(token);
+        if (!tokensToBurn[token]) revert NonRedeemableToken(token);
 
-        if (tokensToBurn[token].isIERC20Burnable) {
-            IERC20Burnable(token).burnFrom(msg.sender, amount);
-        } else {
-            // If it's not a natively burnable token then transfer it to the burn address.
-            IERC20Upgradeable(token).safeTransferFrom(msg.sender, BURN_ADDRESS, amount);
-        }
+        // Just send the token to the burn address directly.
+        IERC20Upgradeable(token).safeTransferFrom(msg.sender, BURN_ADDRESS, amount);
     }
 
     /////////////////////////////////////////////
@@ -173,22 +158,41 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /////////////////////////////////////////////
 
     /// @notice Function to add multiple burn tokens.
-    /// @param burnTokenSettings Array of BurnTokenSettings to be added.
-    function addBurnTokens(BurnTokenSettings[] memory burnTokenSettings) external onlyOwner {
-        for (uint256 i; i < burnTokenSettings.length; ++i) {
-            addBurnTokens(burnTokenSettings[i]);
+    /// @param burnTokens Array of tokens allowed to be burnt to be added.
+    function addBurnTokens(address[] memory burnTokens) external onlyOwner {
+        for (uint256 i; i < burnTokens.length; ++i) {
+            addBurnToken(burnTokens[i]);
         }
     }
 
     /// @notice Function to add a burn token.
-    /// @param burnTokenSettings BurnTokenSettings to be added. This struct includes the token address and the IERC20Burnable support flag.
-    function addBurnTokens(BurnTokenSettings memory burnTokenSettings) public onlyOwner {
-        if (burnTokenSettings.tokenToBurn == address(0)) revert ZeroAddress();
+    /// @dev Returns if the token is already added.
+    /// @param burnToken Token allowed to be burnt to be added.
+    function addBurnToken(address burnToken) public onlyOwner {
+        if(tokensToBurn[burnToken]) return;
 
-        tokensToBurn[burnTokenSettings.tokenToBurn] = BurnTokenDetails({
-            isTokenToBurn: true,
-            isIERC20Burnable: burnTokenSettings.isERC20Burnable
-        });
+        tokensToBurn[burnToken] = true;
+
+        emit BurnTokenAdded(burnToken);
+    }
+
+    /// @notice Function to remove multiple burn tokens.
+    /// @param burnTokens Array of tokens allowed to be burnt to be removed.
+    function removeBurnTokens(address[] memory burnTokens) external onlyOwner {
+        for (uint256 i; i < burnTokens.length; ++i) {
+            removeBurnToken(burnTokens[i]);
+        }
+    }
+
+    /// @notice Function to remove a burn token.
+    /// @dev Returns if the token is already removed.
+    /// @param burnToken Token allowed to be burnt to be removed.
+    function removeBurnToken(address burnToken) public onlyOwner {
+        if(!tokensToBurn[burnToken]) return;
+
+        tokensToBurn[burnToken] = false;
+
+        emit BurnTokenRemoved(burnToken);
     }
 
     /// @notice Function to set the L2 comptroller address deployed on Optimism.

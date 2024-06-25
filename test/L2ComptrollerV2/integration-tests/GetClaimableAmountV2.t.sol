@@ -12,21 +12,21 @@ contract GetClaimableAmountV2 is SetupV2 {
     using stdStorage for StdStorage;
 
     // Events in L2Comptroller and L1Comptroller.
-    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event RequireErrorDuringRedemption(address indexed depositor, string reason);
 
     function setUp() public override {
         super.setUp();
         vm.selectFork(l2ForkId);
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed() public {
+    function test_ShouldReturnCorrectAmount_WhenRedemptionFromL1Failed() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 0.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
 
-        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "redeemFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
         vm.mockCall(
             address(L2DomainMessenger),
@@ -38,7 +38,7 @@ contract GetClaimableAmountV2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
         // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
         // So calculate the expected buy token amount for USDy and USDpy.
@@ -47,7 +47,7 @@ contract GetClaimableAmountV2 is SetupV2 {
         uint256 usdpyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
             USDpy.tokenPrice();
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -55,7 +55,7 @@ contract GetClaimableAmountV2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -75,14 +75,14 @@ contract GetClaimableAmountV2 is SetupV2 {
         );
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndPartialClaimDone() public {
+    function test_ShouldReturnCorrectAmount_WhenRedemptionFromL1Failed_AndPartialClaimDone() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 0.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
 
-        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "redeemFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
         vm.mockCall(
             address(L2DomainMessenger),
@@ -94,9 +94,9 @@ contract GetClaimableAmountV2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -104,7 +104,7 @@ contract GetClaimableAmountV2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -148,14 +148,14 @@ contract GetClaimableAmountV2 is SetupV2 {
         );
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndFullClaimDone() public {
+    function test_ShouldReturnCorrectAmount_WhenRedemptionFromL1Failed_AndFullClaimDone() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 0.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
 
-        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "redeemFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
         vm.mockCall(
             address(L2DomainMessenger),
@@ -167,9 +167,9 @@ contract GetClaimableAmountV2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -177,7 +177,7 @@ contract GetClaimableAmountV2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -206,14 +206,14 @@ contract GetClaimableAmountV2 is SetupV2 {
         );
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndSenderIsNotReceiver() public {
+    function test_ShouldReturnCorrectAmount_WhenRedemptionFromL1Failed_AndSenderIsNotReceiver() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerV2Proxy 0.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
 
-        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "redeemFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
         vm.mockCall(
             address(L2DomainMessenger),
@@ -225,9 +225,9 @@ contract GetClaimableAmountV2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -235,7 +235,7 @@ contract GetClaimableAmountV2 is SetupV2 {
             receiver: dummyReceiver
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,

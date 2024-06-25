@@ -8,8 +8,9 @@ import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/in
 import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
 import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
 
-/// @title L2 comptroller contract for token buy backs.
-/// @notice This contract supports buyback claims raised from the L1 comptroller.
+/// @title L2 comptroller contract for token buy backs or redemptions of one asset for another.
+/// @notice This contract supports redemption claims raised from the L1 comptroller.
+/// @dev This contract is specifically designed to work with dHEDGE pool tokens.
 /// @author dHEDGE
 contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -42,13 +43,13 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     //                Events                   //
     /////////////////////////////////////////////
 
-    event l1ComptrollerSet(address newL1Comptroller);
+    event L1ComptrollerSet(address newL1Comptroller);
     event BuyTokenPriceUpdated(IPoolLogic buyToken, uint256 updatedBuyTokenPrice);
     event ModifiedMaxTokenPriceDrop(IPoolLogic buyToken, uint256 newMaxTokenPriceDrop);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
-    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
-    event AssertionErrorDuringBuyBack(address indexed depositor, uint256 errorCode);
-    event LowLevelErrorDuringBuyBack(address indexed depositor, bytes reason);
+    event RequireErrorDuringRedemption(address indexed depositor, string reason);
+    event AssertionErrorDuringRedemption(address indexed depositor, uint256 errorCode);
+    event LowLevelErrorDuringRedemption(address indexed depositor, bytes reason);
     event TokensClaimed(
         address indexed depositor,
         address indexed receiver,
@@ -137,7 +138,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         transferOwnership(owner);
     }
 
-    /// @notice Function which allows buy back from L1 without bridging tokens.
+    /// @notice Function which allows buy back/redemption from L1 without bridging tokens.
     /// @dev This function can only be called by Optimism's CrossDomainMessenger contract on L2 and the call should have originated
     ///      from the l1Comptroller contract on L1.
     /// @param tokenBurned Address of the token burnt on L1.
@@ -145,7 +146,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @param totalAmountBurntOnL1 Cumulative sum of tokens burnt on L1 by `l1Depositor`.
     /// @param l1Depositor The address which burned `totalAmountBurntOnL1` of `tokenToBurn` on L1.
     /// @param receiver Address of the receiver of the `tokenToBuy`.
-    function buyBackFromL1(
+    function redeemFromL1(
         address tokenBurned,
         address tokenToBuy,
         uint256 totalAmountBurntOnL1,
@@ -180,9 +181,9 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountBurned = totalAmountBurntOnL1;
 
         // The reason we are using try-catch block is that we want to store the `totalAmountBurntOnL1`
-        // regardless of the failure of the `_buyBack` function. This allows for the depositor
+        // regardless of the failure of the `_redeem` function. This allows for the depositor
         // to claim their share on L2 later.
-        try this._buyBack(tokenBurned, IPoolLogic(tokenToBuy), burnTokenAmount, receiver) returns (
+        try this._redeem(tokenBurned, IPoolLogic(tokenToBuy), burnTokenAmount, receiver) returns (
             uint256 buyTokenAmount
         ) {
             // Updating the amount claimed against the tokens burnt by the `l1Depositor`.
@@ -198,14 +199,14 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
             );
         } catch Error(string memory reason) {
             // This is executed in case revert was called and a reason string was provided.
-            emit RequireErrorDuringBuyBack(l1Depositor, reason);
+            emit RequireErrorDuringRedemption(l1Depositor, reason);
         } catch Panic(uint256 errorCode) {
             // This is executed in case of a panic, i.e. a serious error like division by zero
             // or overflow. The error code can be used to determine the kind of error.
-            emit AssertionErrorDuringBuyBack(l1Depositor, errorCode);
+            emit AssertionErrorDuringRedemption(l1Depositor, errorCode);
         } catch (bytes memory reason) {
             // This is executed in case revert() was used.
-            emit LowLevelErrorDuringBuyBack(l1Depositor, reason);
+            emit LowLevelErrorDuringRedemption(l1Depositor, reason);
         }
 
         // The cumulative token amount burnt and claimed against on L2 should never be less than
@@ -258,7 +259,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         // Updating the amount claimed against the tokens burnt by the `msg.sender` on L1.
         burnAndClaimDetails[msg.sender][tokenBurned].totalAmountClaimed += burnTokenAmount;
 
-        uint256 buyTokenAmount = this._buyBack(tokenBurned, tokenToBuy, burnTokenAmount, receiver);
+        uint256 buyTokenAmount = this._redeem(tokenBurned, tokenToBuy, burnTokenAmount, receiver);
 
         // The cumulative token amount burnt and claimed against on L2 should never be less than
         // what's been burnt on L1. This indicates some serious issues.
@@ -270,7 +271,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @dev Although this is marked as an external function, it is meant to be only called by this contract.
     ///      The naming convention is ignored to semantically enforce the meaning.
     // solhint-disable-next-line private-vars-leading-underscore
-    function _buyBack(
+    function _redeem(
         address tokenBurned,
         IPoolLogic tokenToBuy,
         uint256 burnTokenAmount,
@@ -326,7 +327,6 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     ///         of `tokenToBurn`.
     /// @param burnTokenAmount `tokenToBurn` amount to be converted.
     /// @return buyTokenAmount Amount converted to `tokenToBuy`.
-    // Move to L1Comptroller
     function convertToTokenToBuy(
         address tokenToBurn,
         IPoolLogic tokenToBuy,
@@ -387,7 +387,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @param buyTokenSettings The array of `BuyTokenSettings` struct.
     function addBuyTokens(BuyTokenSettings[] memory buyTokenSettings) external onlyOwner {
         for (uint256 i; i < buyTokenSettings.length; ++i) {
-            addBuyTokens(buyTokenSettings[i]);
+            addBuyToken(buyTokenSettings[i]);
         }
     }
 
@@ -395,7 +395,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @param tokensToBuy Array of `IPoolLogic` type tokens.
     function removeBuyTokens(IPoolLogic[] memory tokensToBuy) external onlyOwner {
         for (uint256 i; i < tokensToBuy.length; ++i) {
-            removeBuyTokens(tokensToBuy[i]);
+            removeBuyToken(tokensToBuy[i]);
         }
     }
 
@@ -407,7 +407,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to add a `tokenToBuy` token.
     /// @param buyTokenSetting `BuyTokenSettings` struct which contains the token address and max price drop.
-    function addBuyTokens(BuyTokenSettings memory buyTokenSetting) public onlyOwner {
+    function addBuyToken(BuyTokenSettings memory buyTokenSetting) public onlyOwner {
         uint256 tokenPrice = buyTokenSetting.tokenToBuy.tokenPrice();
 
         if (tokenPrice == 0) revert ZeroTokenPrice(buyTokenSetting.tokenToBuy);
@@ -420,7 +420,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
     /// @notice Function to remove a `tokenToBuy` token.
     /// @param tokenToBuy Address of the token to be removed.
-    function removeBuyTokens(IPoolLogic tokenToBuy) public onlyOwner {
+    function removeBuyToken(IPoolLogic tokenToBuy) public onlyOwner {
         delete buyTokenDetails[tokenToBuy];
     }
 
@@ -432,7 +432,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
 
         l1Comptroller = newL1Comptroller;
 
-        emit l1ComptrollerSet(newL1Comptroller);
+        emit L1ComptrollerSet(newL1Comptroller);
     }
 
     /// @notice Function to modify the acceptable deviation from the last recorded price

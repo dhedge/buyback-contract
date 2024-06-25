@@ -85,19 +85,13 @@ abstract contract SetupV2 is Test {
             )
         );
 
+        address[] memory burnTokens = new address[](2);
+        burnTokens[0] = address(MTA_L1);
+        burnTokens[1] = address(POTATO_SWAP);
+
         // Set burn tokens in the L1Comptroller contract.
         L1ComptrollerV2Proxy.addBurnTokens(
-            L1ComptrollerV2.BurnTokenSettings({
-                tokenToBurn: address(MTA_L1),
-                isERC20Burnable: true
-            })
-        );
-
-        L1ComptrollerV2Proxy.addBurnTokens(
-            L1ComptrollerV2.BurnTokenSettings({
-                tokenToBurn: address(POTATO_SWAP),
-                isERC20Burnable: false
-            })
+            burnTokens
         );
 
         // Fill the accounts with tokens on Ethereum.
@@ -137,16 +131,18 @@ abstract contract SetupV2 is Test {
             exchangePrice: 1e18
         }));
 
-        // Set max token price drops for the buy tokens.
-        L2ComptrollerV2Proxy.addBuyTokens(L2ComptrollerV2.BuyTokenSettings({
+        L2ComptrollerV2.BuyTokenSettings[] memory buyTokens = new L2ComptrollerV2.BuyTokenSettings[](2);
+        buyTokens[0] = L2ComptrollerV2.BuyTokenSettings({
             tokenToBuy: USDy,
             maxTokenPriceDrop: 10 // 0.1% max token price drop
-        }));
-
-        L2ComptrollerV2Proxy.addBuyTokens(L2ComptrollerV2.BuyTokenSettings({
+        });
+        buyTokens[1] = L2ComptrollerV2.BuyTokenSettings({
             tokenToBuy: USDpy,
             maxTokenPriceDrop: 1000 // 10% max token price drop
-        }));
+        });
+
+        // Set max token price drops for the buy tokens.
+        L2ComptrollerV2Proxy.addBuyTokens(buyTokens);        
 
         // Loading the BuyBack contract with dHEDGE pool tokens.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 100_000e18);

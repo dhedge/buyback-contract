@@ -50,18 +50,19 @@ interface ICrossDomainMessengerMod is ICrossDomainMessenger {
     ) external payable;
 }
 
-contract BuyBackFromL1V2 is SetupV2 {
+/// @dev Earlier this contract was named `BuyBackFromL1V2` but was renamed to `RedeemFromL1V2` as the keyword `buyBack` has been removed.
+contract RedeemFromL1V2 is SetupV2 {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using stdStorage for StdStorage;
 
     // Events in L2Comptroller and L1Comptroller.
-    event RequireErrorDuringBuyBack(address indexed depositor, string reason);
+    event RequireErrorDuringRedemption(address indexed depositor, string reason);
 
     function setUp() public override {
         super.setUp();
         vm.selectFork(l2ForkId);
 
-        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "buyBackFromL1" function call,
+        // Since L2ComptrollerV2Proxy checks for the cross chain msg sender during the "redeemFromL1" function call,
         // we need the L2DomainMessenger to report the correct cross-chain caller.
         vm.mockCall(
             address(L2DomainMessenger),
@@ -70,7 +71,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         );
     }
 
-    function test_ShouldBeAbleToBuyBackFromL1_WhenSenderIsReceiver() public {
+    function test_ShouldBeAbleToRedeemFromL1_WhenSenderIsReceiver() public {
         uint256 usdyAliceBuyTokenBalanceBefore = USDy.balanceOf(alice);
         uint256 usdpyAliceBuyTokenBalanceBefore = USDpy.balanceOf(alice);
         uint256 usdyComptrollerBuyTokenBalanceBefore = USDy.balanceOf(address(L2ComptrollerV2Proxy));
@@ -85,7 +86,7 @@ contract BuyBackFromL1V2 is SetupV2 {
 
         vm.startPrank(address(L2DomainMessenger));
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -93,7 +94,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -137,7 +138,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
     }
 
-    function test_ShouldBeAbleToBuyBackFromL1_WhenSenderIsNotReceiver() public {
+    function test_ShouldBeAbleToRedeemFromL1_WhenSenderIsNotReceiver() public {
         uint256 usdyAliceBuyTokenBalanceBefore = USDy.balanceOf(alice);
         uint256 usdpyAliceBuyTokenBalanceBefore = USDpy.balanceOf(alice);
         uint256 usdyDummyReceiverBuyTokenBalanceBefore = USDy.balanceOf(dummyReceiver);
@@ -154,7 +155,7 @@ contract BuyBackFromL1V2 is SetupV2 {
 
         vm.startPrank(address(L2DomainMessenger));
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -162,7 +163,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: dummyReceiver
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -180,16 +181,8 @@ contract BuyBackFromL1V2 is SetupV2 {
             USDpy.balanceOf(dummyReceiver),
             "Dummy receiver's USDpy balance incorrect"
         );
-        assertEq(
-            usdyAliceBuyTokenBalanceBefore,
-            USDy.balanceOf(alice),
-            "Alice's USDy balance shouldn't change"
-        );
-        assertEq(
-            usdpyAliceBuyTokenBalanceBefore,
-            USDpy.balanceOf(alice),
-            "Alice's USDpy balance shouldn't change"
-        );
+        assertEq(usdyAliceBuyTokenBalanceBefore, USDy.balanceOf(alice), "Alice's USDy balance shouldn't change");
+        assertEq(usdpyAliceBuyTokenBalanceBefore, USDpy.balanceOf(alice), "Alice's USDpy balance shouldn't change");
         assertEq(
             usdyComptrollerBuyTokenBalanceBefore - usdyExpectedBuyTokenAmount,
             USDy.balanceOf(address(L2ComptrollerV2Proxy)),
@@ -216,7 +209,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
     }
 
-    function test_ShouldBeAbleToBuyBackFromL1MultipleTimes_WhenEnoughBuyTokensOnL2() public {
+    function test_ShouldBeAbleToRedeemFromL1MultipleTimes_WhenEnoughBuyTokensOnL2() public {
         uint256 usdyAliceBuyTokenBalanceBefore = USDy.balanceOf(alice);
         uint256 usdpyAliceBuyTokenBalanceBefore = USDpy.balanceOf(alice);
         uint256 usdyComptrollerBuyTokenBalanceBefore = USDy.balanceOf(address(L2ComptrollerV2Proxy));
@@ -231,7 +224,7 @@ contract BuyBackFromL1V2 is SetupV2 {
 
         vm.startPrank(address(L2DomainMessenger));
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -239,7 +232,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -253,7 +246,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             USDpy.tokenPrice();
 
         // Second buy back on L1 burned 50e18 tokens.
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
@@ -261,7 +254,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
@@ -304,7 +297,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         assertEq(aliceTotalUSDpyBurned, 150e18, "Alice's USDpy burnt amount incorrect");
     }
 
-    function test_ShouldBeAbleToBuyBackFromL1MultipleTimes_WhenNotEnoughBuyTokensOnL2() public {
+    function test_ShouldBeAbleToRedeemFromL1MultipleTimes_WhenNotEnoughBuyTokensOnL2() public {
         // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 2e18.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 2e18);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 2e18);
@@ -318,9 +311,9 @@ contract BuyBackFromL1V2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -332,9 +325,9 @@ contract BuyBackFromL1V2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -368,7 +361,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
 
         // Second buy back on L1 burned 50e18 tokens.
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
@@ -376,7 +369,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
@@ -419,7 +412,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         assertEq(aliceTotalUSDpyBurned, 150e18, "Alice's L1 burnt amount incorrect");
     }
 
-    function test_ShouldBeAbleToBuyBackFromL1MultipleTimes_WhenNoBuyTokensOnL2() public {
+    function test_ShouldBeAbleToRedeemFromL1MultipleTimes_WhenNoBuyTokensOnL2() public {
         // This makes the buy tokens' balanceOf L2ComptrollerV2Proxy 0.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 0);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 0);
@@ -433,9 +426,9 @@ contract BuyBackFromL1V2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -447,9 +440,9 @@ contract BuyBackFromL1V2 is SetupV2 {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, true, false, false, address(L2ComptrollerV2Proxy));
 
-        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
+        emit RequireErrorDuringRedemption(alice, "ERC20: transfer amount exceeds balance");
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
@@ -483,7 +476,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
 
         // Second buy back on L1 burned 50e18 tokens.
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
@@ -491,7 +484,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             receiver: alice
         });
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
@@ -549,10 +542,10 @@ contract BuyBackFromL1V2 is SetupV2 {
 
         // Send 4 txs, 2 for 1e18 totalBurned and 2 for 2e18 totalBurned.
         address aliasedXDM = AddressAliasHelper.applyL1ToL2Alias(l2xdm.OTHER_MESSENGER());
-        uint256 nonce101 = Encoding.encodeVersionedNonce({ _nonce: 0, _version: 1 });
-        uint256 nonce102 = Encoding.encodeVersionedNonce({ _nonce:1, _version: 1 });
-        uint256 nonce201 = Encoding.encodeVersionedNonce({ _nonce: 2, _version: 1 });
-        uint256 nonce202 = Encoding.encodeVersionedNonce({ _nonce: 3, _version: 1 });
+        uint256 nonce101 = Encoding.encodeVersionedNonce({_nonce: 0, _version: 1});
+        uint256 nonce102 = Encoding.encodeVersionedNonce({_nonce: 1, _version: 1});
+        uint256 nonce201 = Encoding.encodeVersionedNonce({_nonce: 2, _version: 1});
+        uint256 nonce202 = Encoding.encodeVersionedNonce({_nonce: 3, _version: 1});
 
         changePrank(aliasedXDM);
 
@@ -563,7 +556,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -581,7 +574,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -599,7 +592,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -617,7 +610,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -643,7 +636,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -661,7 +654,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -679,7 +672,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -697,7 +690,7 @@ contract BuyBackFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.buyBackFromL1,
+                L2ComptrollerV2.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -714,16 +707,8 @@ contract BuyBackFromL1V2 is SetupV2 {
 
         // user calls claimAll
         changePrank(alice);
-        L2ComptrollerV2Proxy.claimAll({
-            tokenBurned: address(MTA_L1),
-            tokenToBuy: USDy,
-            receiver: alice
-        });
-        L2ComptrollerV2Proxy.claimAll({
-            tokenBurned: address(POTATO_SWAP),
-            tokenToBuy: USDpy,
-            receiver: alice
-        });
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
 
         // The 1e18 totalBurned transaction should have failed since 2e18 totalBurned transaction was replayed first.
         // There will be some rounding error to be taken care of.
@@ -775,7 +760,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         // Bob is the attacker here.
         vm.startPrank(bob);
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
@@ -794,7 +779,7 @@ contract BuyBackFromL1V2 is SetupV2 {
         vm.expectRevert(L2ComptrollerV2.OnlyCrossChainAllowed.selector);
         vm.startPrank(address(L2DomainMessenger));
 
-        L2ComptrollerV2Proxy.buyBackFromL1({
+        L2ComptrollerV2Proxy.redeemFromL1({
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
