@@ -21,6 +21,8 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     //                  Events                 //
     /////////////////////////////////////////////
 
+    event BurnTokenAdded(address token);
+    event BurnTokenRemoved(address token);
     event L2ComptrollerSet(address newL2Comptroller);
     event CrossChainGasLimitModified(uint256 newCrossChainGasLimit);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
@@ -40,9 +42,6 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     error ZeroValue();
     error L2ComptrollerNotSet();
     error NonRedeemableToken(address token);
-    error TokenCannotBeBought(address token);
-    event BurnTokenAdded(address token);
-    event BurnTokenRemoved(address token);
 
     /////////////////////////////////////////////
     //                Variables                //
@@ -94,12 +93,12 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     }
 
     /// @notice Function to initialize this contract.
-    /// @param owner The owner of the contract.
+    /// @param _owner The owner of the contract.
     /// @param _crossDomainMessenger The cross domain messenger contract on L1.
     /// @param _crossChainCallGasLimit The gas limit to be passed for a cross chain call
     ///        to the L2Comptroller contract.
     function initialize(
-        address owner,
+        address _owner,
         ICrossDomainMessenger _crossDomainMessenger,
         uint32 _crossChainCallGasLimit
     ) external initializer {
@@ -111,7 +110,7 @@ contract L1ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         crossDomainMessenger = _crossDomainMessenger;
         crossChainCallGasLimit = _crossChainCallGasLimit;
 
-        transferOwnership(owner);
+        transferOwnership(_owner);
     }
 
     /// @notice Function to burn `amount` of a `token` and claim against it on L2.
