@@ -34,7 +34,7 @@ For anymore details, please read the contracts. They are sufficiently documented
 
 ## How to run tests?
 
-The codebase uses Foundry test suite and integration tests using forking mode. Setup Foundry by following the instructions in their [docs](https://book.getfoundry.sh/getting-started/installation). Make sure that you have set the relevant env variables.
+The codebase uses Foundry test suite and integration tests using forking mode. Setup Foundry by following the instructions in their [docs](https://book.getfoundry.sh/getting-started/installation). Make sure that you have set the relevant env variables. Also make sure that the block numbers that you pass in `.env` file are the same as the ones in `.env.sample` file.
 
 Enter the following command in your terminal. By default, all tests will run.
 ```shell
