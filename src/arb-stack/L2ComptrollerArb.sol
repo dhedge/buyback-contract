@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity 0.8.18;
 
-import {ICrossDomainMessenger} from "../../interfaces/ICrossDomainMessenger.sol";
-import {L2ComptrollerV2Base} from "../../abstracts/L2ComptrollerV2Base.sol";
+import {ICrossDomainMessenger} from "../interfaces/ICrossDomainMessenger.sol";
+import {AddressAliasHelper} from "../libraries/AddressAliasHelper.sol";
+import {L2ComptrollerV2Base} from "../abstracts/L2ComptrollerV2Base.sol";
 
 /// @title L2 comptroller contract for token buy backs or redemptions of one asset for another.
 /// @notice This contract supports redemption claims raised from the L1 comptroller.
 /// @dev This contract is specifically designed to work with dHEDGE pool tokens.
 /// @author dHEDGE
-contract L2ComptrollerOPV2 is L2ComptrollerV2Base {
-    /// @notice The Optimism contract to interact with for sending/verifying data to/from L1
-    ///         using smart contracts.
-    ICrossDomainMessenger public crossDomainMessenger;
+contract L2ComptrollerArb is L2ComptrollerV2Base {
+    using AddressAliasHelper for address;
 
     /////////////////////////////////////////////
     //                Functions                //
@@ -25,26 +24,19 @@ contract L2ComptrollerOPV2 is L2ComptrollerV2Base {
     }
 
     /// @notice The initialization function for this contract.
-    /// @param _crossDomainMessenger The cross domain messenger contract on L2.
-    function initialize(address owner, ICrossDomainMessenger _crossDomainMessenger) external initializer {
-        if (address(_crossDomainMessenger) == address(0)) revert ZeroAddress();
-
+    function initialize(address owner) external initializer {
         // Initialize ownable contract.
         __Ownable_init();
 
         // Initialize Pausable contract.
         __Pausable_init();
 
-        crossDomainMessenger = _crossDomainMessenger;
-
         // Transfer ownership to the owner.
         transferOwnership(owner);
     }
 
     function _preRedemptionChecks() internal view override {
-        // The caller should be the cross domain messenger contract of Optimism
-        // and the call should be initiated by our comptroller contract on L1.
-        if (msg.sender != address(crossDomainMessenger) || crossDomainMessenger.xDomainMessageSender() != l1Comptroller)
-            revert OnlyCrossChainAllowed();
+        // The caller should be our L1 comptroller contract.
+        if(msg.sender.undoL1ToL2Alias() != l1Comptroller) revert OnlyCrossChainAllowed();
     }
 }

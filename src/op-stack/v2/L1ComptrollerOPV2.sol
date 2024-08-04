@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.18;
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
-import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
-import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {IERC20Burnable} from "../../interfaces/IERC20Burnable.sol";
 import {ICrossDomainMessenger} from "../../interfaces/ICrossDomainMessenger.sol";
 
 import {L1ComptrollerV2Base} from "../../abstracts/L1ComptrollerV2Base.sol";
@@ -16,8 +11,6 @@ import {L2ComptrollerOPV2} from "./L2ComptrollerOPV2.sol";
 /// @author dHEDGE
 /// @dev This contract is only useful if paired with the L2 comptroller.
 contract L1ComptrollerOPV2 is L1ComptrollerV2Base {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-
     /// @notice The Optimism contract to interact with on L1 Ethereum for sending data using smart contracts.
     ICrossDomainMessenger public crossDomainMessenger;
 
