@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import {Setup} from "../../helpers/Setup.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L2Comptroller} from "../../../src/L2Comptroller.sol";
+import {L2ComptrollerOPV1} from "../../../src/op-stack/v1/L2ComptrollerOPV1.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -38,13 +38,9 @@ contract GetClaimableAmount is Setup {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerProxy));
 
-        emit RequireErrorDuringBuyBack(
-            alice,
-            "ERC20: transfer amount exceeds balance"
-        );
+        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
 
-        uint256 expectedClaimableAmount = (100e18 *
-            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+        uint256 expectedClaimableAmount = (100e18 * L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
 
         L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
 
@@ -55,9 +51,7 @@ contract GetClaimableAmount is Setup {
         );
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndPartialClaimDone()
-        public
-    {
+    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndPartialClaimDone() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
@@ -75,10 +69,7 @@ contract GetClaimableAmount is Setup {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerProxy));
 
-        emit RequireErrorDuringBuyBack(
-            alice,
-            "ERC20: transfer amount exceeds balance"
-        );
+        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
 
         L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
 
@@ -88,8 +79,7 @@ contract GetClaimableAmount is Setup {
 
         L2ComptrollerProxy.claim(alice, 70e18);
 
-        uint256 expectedClaimableAmount = (30e18 *
-            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+        uint256 expectedClaimableAmount = (30e18 * L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
 
         assertEq(
             expectedClaimableAmount,
@@ -98,9 +88,7 @@ contract GetClaimableAmount is Setup {
         );
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndFullClaimDone()
-        public
-    {
+    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndFullClaimDone() public {
         vm.startPrank(address(L2DomainMessenger));
 
         // This makes the tokenToBuy balanceOf L2ComptrollerProxy 0.
@@ -118,10 +106,7 @@ contract GetClaimableAmount is Setup {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerProxy));
 
-        emit RequireErrorDuringBuyBack(
-            alice,
-            "ERC20: transfer amount exceeds balance"
-        );
+        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
 
         L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
 
@@ -131,16 +116,10 @@ contract GetClaimableAmount is Setup {
 
         L2ComptrollerProxy.claimAll(alice);
 
-        assertEq(
-            0,
-            L2ComptrollerProxy.getClaimableAmount(alice),
-            "Alice's claimable amount wrong"
-        );
+        assertEq(0, L2ComptrollerProxy.getClaimableAmount(alice), "Alice's claimable amount wrong");
     }
 
-    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndSenderIsNotReceiver()
-        public
-    {
+    function test_ShouldReturnCorrectAmount_WhenBuyBackFromL1Failed_AndSenderIsNotReceiver() public {
         address dummyReceiver = makeAddr("dummyReceiver");
 
         vm.startPrank(address(L2DomainMessenger));
@@ -160,10 +139,7 @@ contract GetClaimableAmount is Setup {
         // Since the try/catch block will handle the error, we are checking for the event emission instead.
         vm.expectEmit(true, false, false, true, address(L2ComptrollerProxy));
 
-        emit RequireErrorDuringBuyBack(
-            alice,
-            "ERC20: transfer amount exceeds balance"
-        );
+        emit RequireErrorDuringBuyBack(alice, "ERC20: transfer amount exceeds balance");
 
         L2ComptrollerProxy.buyBackFromL1(alice, alice, 100e18);
 
@@ -173,8 +149,7 @@ contract GetClaimableAmount is Setup {
 
         L2ComptrollerProxy.claim(dummyReceiver, 70e18);
 
-        uint256 expectedClaimableAmount = (30e18 *
-            L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
+        uint256 expectedClaimableAmount = (30e18 * L2ComptrollerProxy.exchangePrice()) / tokenToBuy.tokenPrice();
 
         assertEq(
             expectedClaimableAmount,
@@ -184,10 +159,6 @@ contract GetClaimableAmount is Setup {
 
         L2ComptrollerProxy.claimAll(dummyReceiver);
 
-        assertEq(
-            0,
-            L2ComptrollerProxy.getClaimableAmount(alice),
-            "Alice's claimable amount wrong"
-        );
+        assertEq(0, L2ComptrollerProxy.getClaimableAmount(alice), "Alice's claimable amount wrong");
     }
 }

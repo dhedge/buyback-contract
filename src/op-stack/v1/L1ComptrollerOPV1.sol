@@ -5,14 +5,14 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/a
 import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
-import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
+import {IERC20Burnable} from "../../interfaces/IERC20Burnable.sol";
+import {ICrossDomainMessenger} from "../../interfaces/ICrossDomainMessenger.sol";
 
 /// @title L1 comptroller contract for token buy backs.
 /// @notice Contract to burn a token and claim another one on L2.
 /// @author dHEDGE
 /// @dev This contract is only useful if paired with the L2 comptroller.
-contract L1Comptroller is OwnableUpgradeable, PausableUpgradeable {
+contract L1ComptrollerOPV1 is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     event L2ComptrollerSet(address newL2Comptroller);

@@ -556,7 +556,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -574,7 +574,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -592,7 +592,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -610,7 +610,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -636,7 +636,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -654,7 +654,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -672,7 +672,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
@@ -690,7 +690,7 @@ contract RedeemFromL1V2 is SetupV2 {
             _value: 0,
             _minGasLimit: CROSS_CHAIN_GAS_LIMIT,
             _message: abi.encodeCall(
-                L2ComptrollerV2.redeemFromL1,
+                L2ComptrollerV2Base.redeemFromL1,
                 (
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
@@ -755,7 +755,7 @@ contract RedeemFromL1V2 is SetupV2 {
     }
 
     function test_Revert_WhenCallerIsNotL1Comptroller() public {
-        vm.expectRevert(L2ComptrollerV2.OnlyCrossChainAllowed.selector);
+        vm.expectRevert(L2ComptrollerV2Base.OnlyCrossChainAllowed.selector);
 
         // Bob is the attacker here.
         vm.startPrank(bob);
@@ -776,7 +776,7 @@ contract RedeemFromL1V2 is SetupV2 {
         // instead of L1Comptroller on L1.
         vm.mockCall(address(L2DomainMessenger), abi.encodeWithSignature("xDomainMessageSender()"), abi.encode(bob));
 
-        vm.expectRevert(L2ComptrollerV2.OnlyCrossChainAllowed.selector);
+        vm.expectRevert(L2ComptrollerV2Base.OnlyCrossChainAllowed.selector);
         vm.startPrank(address(L2DomainMessenger));
 
         L2ComptrollerV2Proxy.redeemFromL1({

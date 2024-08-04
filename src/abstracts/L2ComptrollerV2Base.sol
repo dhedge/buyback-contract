@@ -5,14 +5,14 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/a
 import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
-import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
+import {ICrossDomainMessenger} from "../interfaces/ICrossDomainMessenger.sol";
+import {IPoolLogic} from "../interfaces/IPoolLogic.sol";
 
 /// @title L2 comptroller contract for token buy backs or redemptions of one asset for another.
 /// @notice This contract supports redemption claims raised from the L1 comptroller.
 /// @dev This contract is specifically designed to work with dHEDGE pool tokens.
 /// @author dHEDGE
-contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
+abstract contract L2ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /////////////////////////////////////////////
@@ -89,10 +89,6 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     /// @notice Denominator for bps calculations.
     uint256 public constant DENOMINATOR = 10_000;
 
-    /// @notice The Optimism contract to interact with for sending/verifying data to/from L1
-    ///         using smart contracts.
-    ICrossDomainMessenger public crossDomainMessenger;
-
     /// @notice Address of the L1 comptroller which is allowed for cross chain buy-backs.
     /// @dev Has to be set after deployment of both the contracts.
     address public l1Comptroller;
@@ -113,31 +109,6 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     //                Functions                //
     /////////////////////////////////////////////
 
-    /// @dev To prevent the implementation contract from being used, we invoke the _disableInitializers
-    /// function in the constructor to automatically lock it when it is deployed.
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    /// @notice The initialization function for this contract.
-    /// @param _crossDomainMessenger The cross domain messenger contract on L2.
-
-    function initialize(address owner, ICrossDomainMessenger _crossDomainMessenger) external initializer {
-        if (address(_crossDomainMessenger) == address(0)) revert ZeroAddress();
-
-        // Initialize ownable contract.
-        __Ownable_init();
-
-        // Initialize Pausable contract.
-        __Pausable_init();
-
-        crossDomainMessenger = _crossDomainMessenger;
-
-        // Transfer ownership to the owner.
-        transferOwnership(owner);
-    }
-
     /// @notice Function which allows buy back/redemption from L1 without bridging tokens.
     /// @dev This function can only be called by Optimism's CrossDomainMessenger contract on L2 and the call should have originated
     ///      from the l1Comptroller contract on L1.
@@ -153,10 +124,7 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         address l1Depositor,
         address receiver
     ) external whenNotPaused {
-        // The caller should be the cross domain messenger contract of Optimism
-        // and the call should be initiated by our comptroller contract on L1.
-        if (msg.sender != address(crossDomainMessenger) || crossDomainMessenger.xDomainMessageSender() != l1Comptroller)
-            revert OnlyCrossChainAllowed();
+        _preRedemptionChecks();
 
         // `totalAmountClaimed` is of the `tokenToBurn` denomination.
         uint256 totalAmountClaimed = burnAndClaimDetails[l1Depositor][tokenBurned].totalAmountClaimed;
@@ -371,6 +339,11 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
         return convertToTokenToBurn(tokenToBurn, tokenToBuy, tokenToBuy.balanceOf(address(this)));
     }
 
+    /// @dev Function to be called before the redemption process.
+    /// @dev Can be used to determine if a redemption call is valid or not (caller must be L1Comptroller and so on).
+    /// @dev Should revert if the redemption call is invalid.
+    function _preRedemptionChecks() internal view virtual {}
+
     /////////////////////////////////////////////
     //             Owner Functions             //
     /////////////////////////////////////////////
@@ -472,4 +445,6 @@ contract L2ComptrollerV2 is OwnableUpgradeable, PausableUpgradeable {
     function unpause() external onlyOwner {
         _unpause();
     }
+
+    uint256[45] private __gap;
 }

@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import {Setup} from "../../helpers/Setup.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L1Comptroller} from "../../../src/L1Comptroller.sol";
+import {L1ComptrollerOPV1} from "../../../src/op-stack/v1/L1ComptrollerOPV1.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -46,7 +46,7 @@ contract SetCrossChainGasLimit is Setup {
     function test_Revert_WhenZeroGasLimitPassed() public {
         vm.prank(admin);
 
-        vm.expectRevert(L1Comptroller.ZeroValue.selector);
+        vm.expectRevert(L1ComptrollerOPV1.ZeroValue.selector);
 
         L1ComptrollerProxy.setCrossChainGasLimit(0);
     }

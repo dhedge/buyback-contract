@@ -51,7 +51,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(MTA_L1), address(USDy), 100e18, alice, alice)
                     ),
                     1_920_000
@@ -66,7 +66,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(POTATO_SWAP), address(USDpy), 100e18, alice, alice)
                     ),
                     1_920_000
@@ -113,7 +113,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(MTA_L1), address(USDy), 100e18, alice, dummyReceiver)
                     ),
                     1_920_000
@@ -128,7 +128,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(POTATO_SWAP), address(USDpy), 100e18, alice, dummyReceiver)
                     ),
                     1_920_000
@@ -393,7 +393,7 @@ contract RedeemV2 is SetupV2 {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerV2Proxy),
-                    abi.encodeCall(L2ComptrollerV2.redeemFromL1, (address(MTA_L1), address(USDy), 0, alice, alice)),
+                    abi.encodeCall(L2ComptrollerV2Base.redeemFromL1, (address(MTA_L1), address(USDy), 0, alice, alice)),
                     1_920_000
                 )
             )
@@ -406,7 +406,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(POTATO_SWAP), address(USDpy), 0, alice, alice)
                     ),
                     1_920_000
@@ -485,7 +485,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(MTA_L1), address(USDy), 100e18, alice, alice)
                     ),
                     1_920_000
@@ -500,7 +500,7 @@ contract RedeemV2 is SetupV2 {
                 (
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
-                        L2ComptrollerV2.redeemFromL1,
+                        L2ComptrollerV2Base.redeemFromL1,
                         (address(POTATO_SWAP), address(USDpy), 100e18, alice, alice)
                     ),
                     1_920_000
@@ -577,7 +577,7 @@ contract RedeemV2 is SetupV2 {
         // Impersonate as Alice and call the `redeem` function.
         // We are expecting this call to revert as L2Comptroller is not set.
         vm.startPrank(alice);
-        vm.expectRevert(L1ComptrollerV2.L2ComptrollerNotSet.selector);
+        vm.expectRevert(L1ComptrollerV2Base.L2ComptrollerNotSet.selector);
 
         L1ComptrollerV2Proxy.redeem({
             tokenToBurn: address(MTA_L1),

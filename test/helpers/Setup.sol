@@ -5,8 +5,8 @@ import {ProxyAdmin} from "openzeppelin-contracts/contracts/proxy/transparent/Pro
 import {TransparentUpgradeableProxy} from "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {Create2Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/utils/Create2Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L1Comptroller} from "../../src/L1Comptroller.sol";
-import {L2Comptroller} from "../../src/L2Comptroller.sol";
+import {L1ComptrollerOPV1} from "../../src/op-stack/v1/L1ComptrollerOPV1.sol";
+import {L2ComptrollerOPV1} from "../../src/op-stack/v1/L2ComptrollerOPV1.sol";
 import {IERC20Burnable} from "../../src/interfaces/IERC20Burnable.sol";
 import {IPoolLogic} from "../../src/interfaces/IPoolLogic.sol";
 import {ICrossDomainMessenger} from "../../src/interfaces/ICrossDomainMessenger.sol";
@@ -41,8 +41,8 @@ abstract contract Setup is Test {
     IPoolLogic internal constant tokenToBuy =
         IPoolLogic(0x0F6eAe52ae1f94Bc759ed72B201A2fDb14891485);
 
-    L1Comptroller internal L1ComptrollerProxy;
-    L2Comptroller internal L2ComptrollerProxy;
+    L1ComptrollerOPV1 internal L1ComptrollerProxy;
+    L2ComptrollerOPV1 internal L2ComptrollerProxy;
     address internal L1ComptrollerImplementation;
     address internal L2ComptrollerlImplementation;
     address internal proxyAdmin;
@@ -72,10 +72,10 @@ abstract contract Setup is Test {
         );
 
         // Create a new L1Comptroller implementation.
-        L1ComptrollerImplementation = address(new L1Comptroller());
+        L1ComptrollerImplementation = address(new L1ComptrollerOPV1());
 
         // Create a new L1Comptroller proxy.
-        L1ComptrollerProxy = L1Comptroller(
+        L1ComptrollerProxy = L1ComptrollerOPV1(
             address(
                 new TransparentUpgradeableProxy(
                     L1ComptrollerImplementation,
@@ -101,10 +101,10 @@ abstract contract Setup is Test {
         Create2Upgradeable.deploy(0, SALT, type(ProxyAdmin).creationCode);
 
         // Create a new L2Comptroller implementation.
-        L2ComptrollerlImplementation = address(new L2Comptroller());
+        L2ComptrollerlImplementation = address(new L2ComptrollerOPV1());
 
         // Create a new L2Comptroller proxy.
-        L2ComptrollerProxy = L2Comptroller(
+        L2ComptrollerProxy = L2ComptrollerOPV1(
             address(
                 new TransparentUpgradeableProxy(
                     L2ComptrollerlImplementation,

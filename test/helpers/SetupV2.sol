@@ -5,12 +5,13 @@ import {ProxyAdmin} from "openzeppelin-contracts/contracts/proxy/transparent/Pro
 import {TransparentUpgradeableProxy} from "openzeppelin-contracts/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {Create2Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/utils/Create2Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L1ComptrollerV2} from "../../src/L1ComptrollerV2.sol";
-import {L2ComptrollerV2} from "../../src/L2ComptrollerV2.sol";
 import {IERC20Burnable} from "../../src/interfaces/IERC20Burnable.sol";
 import {IPoolLogic} from "../../src/interfaces/IPoolLogic.sol";
 import {ICrossDomainMessenger} from "../../src/interfaces/ICrossDomainMessenger.sol";
 import {IL2CrossDomainMessenger} from "../../src/interfaces/IL2CrossDomainMessenger.sol";
+
+import "../../src/op-stack/v2/L1ComptrollerOPV2.sol";
+import "../../src/op-stack/v2/L2ComptrollerOPV2.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -21,7 +22,7 @@ abstract contract SetupV2 is Test {
     address internal dummyReceiver = makeAddr("dummyReceiver");
     address internal burnMultiSig = makeAddr("burnMultiSig");
     address[] internal accounts = [admin, alice, bob, burnMultiSig];
-    
+
     address internal constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     // Cross domain messenger on L1 Ethereum
@@ -45,8 +46,8 @@ abstract contract SetupV2 is Test {
 
     uint32 internal constant CROSS_CHAIN_GAS_LIMIT = 1_920_000;
 
-    L1ComptrollerV2 internal L1ComptrollerV2Proxy;
-    L2ComptrollerV2 internal L2ComptrollerV2Proxy;
+    L1ComptrollerOPV2 internal L1ComptrollerV2Proxy;
+    L2ComptrollerOPV2 internal L2ComptrollerV2Proxy;
     address internal L1ComptrollerV2Implementation;
     address internal L2ComptrollerV2Implementation;
     address internal proxyAdmin;
@@ -72,15 +73,15 @@ abstract contract SetupV2 is Test {
         proxyAdmin = Create2Upgradeable.deploy(0, SALT, type(ProxyAdmin).creationCode);
 
         // Create a new L1Comptroller implementation.
-        L1ComptrollerV2Implementation = address(new L1ComptrollerV2());
+        L1ComptrollerV2Implementation = address(new L1ComptrollerOPV2());
 
         // Create a new L1Comptroller proxy.
-        L1ComptrollerV2Proxy = L1ComptrollerV2(
+        L1ComptrollerV2Proxy = L1ComptrollerOPV2(
             address(
                 new TransparentUpgradeableProxy(
                     L1ComptrollerV2Implementation,
                     proxyAdmin,
-                    abi.encodeCall(L1ComptrollerV2.initialize, (admin, L1DomainMessenger, CROSS_CHAIN_GAS_LIMIT))
+                    abi.encodeCall(L1ComptrollerOPV2.initialize, (admin, L1DomainMessenger, CROSS_CHAIN_GAS_LIMIT))
                 )
             )
         );
@@ -90,9 +91,7 @@ abstract contract SetupV2 is Test {
         burnTokens[1] = address(POTATO_SWAP);
 
         // Set burn tokens in the L1Comptroller contract.
-        L1ComptrollerV2Proxy.addBurnTokens(
-            burnTokens
-        );
+        L1ComptrollerV2Proxy.addBurnTokens(burnTokens);
 
         // Fill the accounts with tokens on Ethereum.
         _fillWallets(address(MTA_L1));
@@ -104,15 +103,15 @@ abstract contract SetupV2 is Test {
         Create2Upgradeable.deploy(0, SALT, type(ProxyAdmin).creationCode);
 
         // Create a new L2Comptroller implementation.
-        L2ComptrollerV2Implementation = address(new L2ComptrollerV2());
+        L2ComptrollerV2Implementation = address(new L2ComptrollerOPV2());
 
         // Create a new L2Comptroller proxy.
-        L2ComptrollerV2Proxy = L2ComptrollerV2(
+        L2ComptrollerV2Proxy = L2ComptrollerOPV2(
             address(
                 new TransparentUpgradeableProxy(
                     L2ComptrollerV2Implementation,
                     proxyAdmin,
-                    abi.encodeCall(L2ComptrollerV2.initialize, (admin, L2DomainMessenger))
+                    abi.encodeCall(L2ComptrollerOPV2.initialize, (admin, L2DomainMessenger))
                 )
             )
         );
@@ -121,28 +120,26 @@ abstract contract SetupV2 is Test {
         L2ComptrollerV2Proxy.setL1Comptroller(address(L1ComptrollerV2Proxy));
 
         // Set the exchange prices of the burn tokens.
-        L2ComptrollerV2Proxy.setExchangePrices(L2ComptrollerV2.BurnTokenSettings({
-            tokenToBurn: address(MTA_L1),
-            exchangePrice: 0.03e18
-        }));
+        L2ComptrollerV2Proxy.setExchangePrices(
+            L2ComptrollerV2Base.BurnTokenSettings({tokenToBurn: address(MTA_L1), exchangePrice: 0.03e18})
+        );
 
-        L2ComptrollerV2Proxy.setExchangePrices(L2ComptrollerV2.BurnTokenSettings({
-            tokenToBurn: address(POTATO_SWAP),
-            exchangePrice: 1e18
-        }));
+        L2ComptrollerV2Proxy.setExchangePrices(
+            L2ComptrollerV2Base.BurnTokenSettings({tokenToBurn: address(POTATO_SWAP), exchangePrice: 1e18})
+        );
 
-        L2ComptrollerV2.BuyTokenSettings[] memory buyTokens = new L2ComptrollerV2.BuyTokenSettings[](2);
-        buyTokens[0] = L2ComptrollerV2.BuyTokenSettings({
+        L2ComptrollerV2Base.BuyTokenSettings[] memory buyTokens = new L2ComptrollerV2Base.BuyTokenSettings[](2);
+        buyTokens[0] = L2ComptrollerV2Base.BuyTokenSettings({
             tokenToBuy: USDy,
             maxTokenPriceDrop: 10 // 0.1% max token price drop
         });
-        buyTokens[1] = L2ComptrollerV2.BuyTokenSettings({
+        buyTokens[1] = L2ComptrollerV2Base.BuyTokenSettings({
             tokenToBuy: USDpy,
             maxTokenPriceDrop: 1000 // 10% max token price drop
         });
 
         // Set max token price drops for the buy tokens.
-        L2ComptrollerV2Proxy.addBuyTokens(buyTokens);        
+        L2ComptrollerV2Proxy.addBuyTokens(buyTokens);
 
         // Loading the BuyBack contract with dHEDGE pool tokens.
         deal(address(USDy), address(L2ComptrollerV2Proxy), 100_000e18);

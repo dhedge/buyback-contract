@@ -603,7 +603,13 @@ contract ClaimV2 is SetupV2 {
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 100e18)
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
+                address(MTA_L1),
+                0,
+                100e18
+            )
         );
 
         L2ComptrollerV2Proxy.claim({
@@ -615,7 +621,7 @@ contract ClaimV2 is SetupV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(POTATO_SWAP),
                 0,
@@ -662,7 +668,13 @@ contract ClaimV2 is SetupV2 {
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 100e18)
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
+                address(MTA_L1),
+                0,
+                100e18
+            )
         );
 
         L2ComptrollerV2Proxy.claim({
@@ -674,7 +686,7 @@ contract ClaimV2 is SetupV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(POTATO_SWAP),
                 0,
@@ -742,7 +754,7 @@ contract ClaimV2 is SetupV2 {
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(MTA_L1),
                 100e18,
@@ -759,7 +771,7 @@ contract ClaimV2 is SetupV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(POTATO_SWAP),
                 100e18,
@@ -827,7 +839,7 @@ contract ClaimV2 is SetupV2 {
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(MTA_L1),
                 100e18,
@@ -844,7 +856,7 @@ contract ClaimV2 is SetupV2 {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                L2ComptrollerV2.ExceedingClaimableAmount.selector,
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
                 address(POTATO_SWAP),
                 100e18,
