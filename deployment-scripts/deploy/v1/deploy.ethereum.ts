@@ -1,5 +1,5 @@
-import { tryVerify } from "./misc/Helpers";
-import { config } from "./configs/config.ethereum";
+import { tryVerify } from "../../misc/Helpers";
+import { config } from "../../configs/v1/config.ethereum";
 
 async function main() {
     const signer = (await ethers.getSigners())[0];

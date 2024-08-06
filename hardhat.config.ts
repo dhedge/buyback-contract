@@ -7,6 +7,8 @@ import "@openzeppelin/hardhat-upgrades";
 import "@openzeppelin/hardhat-defender";
 import { HardhatUserConfig } from "hardhat/config";
 
+import "./deployment-scripts/deploy/v2/DeployArbL1Comptroller";
+import "./deployment-scripts/deploy/v2/DeployArbL2Comptroller";
 import "./deployment-scripts/tasks/L1Handover";
 import "./deployment-scripts/tasks/L2Handover";
 import "./deployment-scripts/tasks/CheckL1Comptroller";
@@ -49,13 +51,35 @@ const config: HardhatUserConfig = {
                 ? [process.env.ETHEREUM_PRIVATE_KEY]
                 : [],
         },
+        sepolia: {
+            chainId: 11155111,
+            url: process.env.ETHEREUM_SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
+            accounts: [process.env.TESTNET_PRIVATE_KEY!],
+        },
+        arbitrumSepolia: {
+            chainId: 421614,
+            url: process.env.ARBITRUM_SEPOLIA_RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc",
+            accounts: [process.env.TESTNET_PRIVATE_KEY!],
+        }
     },
     etherscan: {
         // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
         apiKey: {
             mainnet: process.env.ETHERSCAN_API_KEY!,
+            sepolia: process.env.ETHERSCAN_API_KEY!,
             optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
+            arbitrumSepolia: process.env.ARBISCAN_API_KEY!
         },
+        customChains: [
+            {
+                network: "arbitrumSepolia",
+                chainId: 421614,
+                urls: {
+                    apiURL: "https://api-sepolia.arbiscan.io/api",
+                    browserURL: "https://sepolia.arbiscan.io/",
+                }
+            }
+        ]
     },
     defender: {
         apiKey: process.env.DEFENDER_API_KEY!,
