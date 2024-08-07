@@ -11,6 +11,8 @@ import {L2ComptrollerOPV2} from "./L2ComptrollerOPV2.sol";
 /// @author dHEDGE
 /// @dev This contract is only useful if paired with the L2 comptroller.
 contract L1ComptrollerOPV2 is L1ComptrollerV2Base {
+    error NoETHTransferRequired();
+    
     /// @notice The Optimism contract to interact with on L1 Ethereum for sending data using smart contracts.
     ICrossDomainMessenger public crossDomainMessenger;
 
@@ -62,6 +64,8 @@ contract L1ComptrollerOPV2 is L1ComptrollerV2Base {
 
     /// @dev For Op-Stack chains, we need to use `crossDomainMessenger` for sending messages from L1 to L2.
     function _sendMessage(bytes memory messageData, bytes memory) internal override {
+        if(msg.value > 0) revert NoETHTransferRequired();
+
         crossDomainMessenger.sendMessage(l2Comptroller, messageData, crossChainCallGasLimit);
     }
 

@@ -95,7 +95,7 @@ abstract contract L1ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
         uint256 burnTokenAmount,
         address receiver,
         bytes memory additionalData
-    ) public whenNotPaused whenL2ComptrollerSet {
+    ) public payable whenNotPaused whenL2ComptrollerSet {
         _burnToken(tokenToBurn, burnTokenAmount);
 
         uint256 totalBurntAmount = burntAmountOf[msg.sender][tokenToBurn] += burnTokenAmount;
