@@ -38,18 +38,19 @@ const config: HardhatUserConfig = {
             url:
                 process.env.OPTIMISM_RPC_URL ||
                 "https://opt-mainnet.g.alchemy.com/v2/",
-            accounts: process.env.OPTIMISM_PRIVATE_KEY
-                ? [process.env.OPTIMISM_PRIVATE_KEY]
-                : [],
+            accounts: [process.env.OPTIMISM_PRIVATE_KEY!]
         },
         ethereum: {
             chainId: 1,
             url:
                 process.env.ETHEREUM_RPC_URL ||
-                "https://eth-mainnet.g.alchemy.com/v2/",
-            accounts: process.env.ETHEREUM_PRIVATE_KEY
-                ? [process.env.ETHEREUM_PRIVATE_KEY]
-                : [],
+                "https://eth.llamarpc.com",
+            accounts: [process.env.ETHEREUM_PRIVATE_KEY!]
+        },
+        arbitrumOne:{
+            chainId: 42161,
+            url: process.env.ARBITRUM_RPC_URL || "https://arbitrum.llamarpc.com",
+            accounts: [process.env.ARBITRUM_PRIVATE_KEY!]
         },
         sepolia: {
             chainId: 11155111,
@@ -66,6 +67,7 @@ const config: HardhatUserConfig = {
         // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
         apiKey: {
             mainnet: process.env.ETHERSCAN_API_KEY!,
+            arbitrumOne: process.env.ARBISCAN_API_KEY!,
             sepolia: process.env.ETHERSCAN_API_KEY!,
             optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
             arbitrumSepolia: process.env.ARBISCAN_API_KEY!
