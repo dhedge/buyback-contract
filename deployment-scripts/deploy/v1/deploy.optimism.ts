@@ -1,4 +1,4 @@
-import { tryVerify } from "./misc/Helpers";
+import { tryVerify } from "../../misc/Helpers";
 import { config } from "./configs/config.optimism";
 
 async function main() {

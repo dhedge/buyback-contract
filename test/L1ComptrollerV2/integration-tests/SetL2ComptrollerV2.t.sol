@@ -41,7 +41,7 @@ contract SetL2ComptrollerV2 is SetupV2 {
     function test_Revert_WhenNullAddressPassed() public {
         vm.prank(admin);
 
-        vm.expectRevert(L1ComptrollerV2.ZeroAddress.selector);
+        vm.expectRevert(L1ComptrollerV2Base.ZeroAddress.selector);
 
         L1ComptrollerV2Proxy.setL2Comptroller(address(0));
     }

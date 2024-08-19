@@ -5,14 +5,14 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/a
 import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {IERC20Burnable} from "./interfaces/IERC20Burnable.sol";
-import {ICrossDomainMessenger} from "./interfaces/ICrossDomainMessenger.sol";
-import {IPoolLogic} from "./interfaces/IPoolLogic.sol";
+import {IERC20Burnable} from "../../interfaces/IERC20Burnable.sol";
+import {ICrossDomainMessenger} from "../../interfaces/ICrossDomainMessenger.sol";
+import {IPoolLogic} from "../../interfaces/IPoolLogic.sol";
 
 /// @title L2 comptroller contract for token buy backs.
 /// @notice This contract supports buyback claims raised from the L1 comptroller.
 /// @author dHEDGE
-contract L2Comptroller is OwnableUpgradeable, PausableUpgradeable {
+contract L2ComptrollerOPV1 is OwnableUpgradeable, PausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     event l1ComptrollerSet(address newL1Comptroller);

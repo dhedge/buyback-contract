@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { task } from "hardhat/config";
-import { config } from "../configs/config.optimism";
+import { config } from "../configs/v1/config.optimism";
 
 task(
     "CheckL2Comptroller",

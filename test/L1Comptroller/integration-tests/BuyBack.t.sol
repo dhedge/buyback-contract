@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import {Setup} from "../../helpers/Setup.sol";
 import {SafeERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {IERC20Upgradeable} from "openzeppelin-contracts-upgradeable/contracts/interfaces/IERC20Upgradeable.sol";
-import {L1Comptroller} from "../../../src/L1Comptroller.sol";
+import {L1ComptrollerOPV1} from "../../../src/op-stack/v1/L1ComptrollerOPV1.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
@@ -15,7 +15,7 @@ contract BuyBack is Setup {
     function setUp() public override {
         super.setUp();
         vm.selectFork(l1ForkId);
-    } 
+    }
 
     function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsSender() public {
         uint256 tokenSupplyBefore = tokenToBurnL1.totalSupply();
@@ -24,10 +24,7 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            100e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 100e18);
 
         // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
         // with the relevant data.
@@ -37,12 +34,7 @@ contract BuyBack is Setup {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerProxy),
-                    abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint256)",
-                        alice,
-                        alice,
-                        100e18
-                    ),
+                    abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, alice, 100e18),
                     1_920_000
                 )
             )
@@ -50,21 +42,9 @@ contract BuyBack is Setup {
 
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore - 100e18,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 100e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            100e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 100e18, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 100e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 100e18, "Burnt amount not updated");
     }
 
     function test_ShouldBurnCorrectAmountOfTokens_WhenReceiverIsNotSender() public {
@@ -75,10 +55,7 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            100e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 100e18);
 
         // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
         // with the relevant data.
@@ -88,12 +65,7 @@ contract BuyBack is Setup {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerProxy),
-                    abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint256)",
-                        alice,
-                        dummyReceiver,
-                        100e18
-                    ),
+                    abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, dummyReceiver, 100e18),
                     1_920_000
                 )
             )
@@ -101,21 +73,9 @@ contract BuyBack is Setup {
 
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore - 100e18,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 100e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            100e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 100e18, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 100e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 100e18, "Burnt amount not updated");
     }
 
     function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsSender() public {
@@ -126,40 +86,22 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            200e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 200e18);
 
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
         // Initiate the buy back on L1 again.
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore - 200e18,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 200e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            200e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 200e18, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 200e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 200e18, "Burnt amount not updated");
 
         // Impersonate Bob now.
         changePrank(bob);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            200e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 200e18);
 
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
@@ -169,21 +111,9 @@ contract BuyBack is Setup {
         // Initiate the buy back on L1 again.
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(bob),
-            bobBalanceBefore - 200e18,
-            "Wrong Bob's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 400e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(bob),
-            200e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(bob), bobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 400e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(bob), 200e18, "Burnt amount not updated");
     }
 
     function test_ShouldUpdateBurntAmountCorrectly_WhenReceiverIsNotSender() public {
@@ -195,40 +125,22 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            200e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 200e18);
 
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
         // Initiate the buy back on L1 again.
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore - 200e18,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 200e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            200e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 200e18, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 200e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 200e18, "Burnt amount not updated");
 
         // Impersonate Bob now.
         changePrank(bob);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            200e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 200e18);
 
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
@@ -238,21 +150,9 @@ contract BuyBack is Setup {
         // Initiate the buy back on L1 again.
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(bob),
-            bobBalanceBefore - 200e18,
-            "Wrong Bob's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 400e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(bob),
-            200e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(bob), bobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 400e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(bob), 200e18, "Burnt amount not updated");
     }
 
     function test_ShouldBeAbleToBuyBack_WhenZeroBurnAmountGiven() public {
@@ -262,10 +162,7 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            100e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 100e18);
 
         // Expecting a call to be made to the Optimism's cross domain messenger contract on L1
         // with the relevant data.
@@ -275,12 +172,7 @@ contract BuyBack is Setup {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerProxy),
-                    abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint256)",
-                        alice,
-                        alice,
-                        0
-                    ),
+                    abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, alice, 0),
                     1_920_000
                 )
             )
@@ -288,21 +180,9 @@ contract BuyBack is Setup {
 
         L1ComptrollerProxy.buyBack(alice, 0);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            0,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 0, "Burnt amount not updated");
     }
 
     // When a user calls the function with 0 given as the `burnTokenAmount` after
@@ -315,10 +195,7 @@ contract BuyBack is Setup {
         vm.startPrank(alice);
 
         // Approve the MTA tokens to the L1Comptroller for burn.
-        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(
-            address(L1ComptrollerProxy),
-            1000e18
-        );
+        IERC20Upgradeable(tokenToBurnL1).safeIncreaseAllowance(address(L1ComptrollerProxy), 1000e18);
 
         L1ComptrollerProxy.buyBack(alice, 100e18);
 
@@ -330,12 +207,7 @@ contract BuyBack is Setup {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerProxy),
-                    abi.encodeWithSignature(
-                        "buyBackFromL1(address,address,uint256)",
-                        alice,
-                        alice,
-                        100e18
-                    ),
+                    abi.encodeWithSignature("buyBackFromL1(address,address,uint256)", alice, alice, 100e18),
                     1_920_000
                 )
             )
@@ -343,21 +215,9 @@ contract BuyBack is Setup {
 
         L1ComptrollerProxy.buyBack(alice, 0);
 
-        assertEq(
-            tokenToBurnL1.balanceOf(alice),
-            aliceBalanceBefore - 100e18,
-            "Wrong Alice's balance after burn"
-        );
-        assertEq(
-            tokenToBurnL1.totalSupply(),
-            tokenSupplyBefore - 100e18,
-            "Wrong total supply"
-        );
-        assertEq(
-            L1ComptrollerProxy.burntAmountOf(alice),
-            100e18,
-            "Burnt amount not updated"
-        );
+        assertEq(tokenToBurnL1.balanceOf(alice), aliceBalanceBefore - 100e18, "Wrong Alice's balance after burn");
+        assertEq(tokenToBurnL1.totalSupply(), tokenSupplyBefore - 100e18, "Wrong total supply");
+        assertEq(L1ComptrollerProxy.burntAmountOf(alice), 100e18, "Burnt amount not updated");
     }
 
     function test_Revert_WhenPaused() public {
@@ -381,22 +241,15 @@ contract BuyBack is Setup {
         address dummyReceiver = makeAddr("dummyReceiver");
 
         // Find the slot of the `L2Comptroller` storage variable in the `L1Comptroller` contract.
-        uint256 slot = stdstore
-            .target(L1ComptrollerImplementation)
-            .sig("l2Comptroller()")
-            .find();
+        uint256 slot = stdstore.target(L1ComptrollerImplementation).sig("l2Comptroller()").find();
 
         // Modify the storage slot to set the `L2Comptroller` variable to address(0).
-        vm.store(
-            address(L1ComptrollerProxy),
-            bytes32(slot),
-            bytes32(uint256(0))
-        );
+        vm.store(address(L1ComptrollerProxy), bytes32(slot), bytes32(uint256(0)));
 
         // Impersonate as Alice and call the `buyBack` function.
         // We are expecting this call to revert as L2Comptroller is not set.
         vm.prank(alice);
-        vm.expectRevert(L1Comptroller.L2ComptrollerNotSet.selector);
+        vm.expectRevert(L1ComptrollerOPV1.L2ComptrollerNotSet.selector);
 
         L1ComptrollerProxy.buyBack(dummyReceiver, 100e18);
     }

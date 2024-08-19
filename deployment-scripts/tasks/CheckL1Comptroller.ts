@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { task } from "hardhat/config";
-import { config } from "../configs/config.ethereum";
+import { config } from "../configs/v1/config.ethereum";
 
 task(
     "CheckL1Comptroller",

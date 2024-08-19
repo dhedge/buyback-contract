@@ -1,0 +1,213 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xd7aE9C6B93E5fa0a3b8C3F697a787521Cd928a9F",
+    "txHash": "0x67046ab4affc4a3c77db641e575c8a7a8f056e39cd9c53b6c8dd4169c8013d92"
+  },
+  "proxies": [
+    {
+      "address": "0x829B7003B9723fc1aCe78f222B34D46e5298fEDF",
+      "txHash": "0xe626501bcf49d34aafe46c0efd8d5a0d4684b529726029f958ecf948fd5fc6d3",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x1D8B831570814c408404357064BBF280555f0461",
+      "txHash": "0xa59cceeaa301aaf94e522357425d831e0a01f92c22587527b3aa82a8e9fe6c1d",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "8d8efa3e4a112a2c1a87d25fbdc348716d428e441a5c82a52cf545c875c4e706": {
+      "address": "0xcd9e308017dA5efd4E2E19148070dfa649E8411a",
+      "txHash": "0x10f20df21d78789b7ffd2e4c48aa0c60dfcc6e78ec814721b707996625518101",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_paused",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_bool",
+            "contract": "PausableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol:29"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "PausableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol:116"
+          },
+          {
+            "label": "l1Comptroller",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_address",
+            "contract": "L2ComptrollerV2Base",
+            "src": "src/abstracts/L2ComptrollerV2Base.sol:94"
+          },
+          {
+            "label": "exchangePrices",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "L2ComptrollerV2Base",
+            "src": "src/abstracts/L2ComptrollerV2Base.sol:97"
+          },
+          {
+            "label": "buyTokenDetails",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_contract(IPoolLogic)2912,t_struct(BuyTokenDetails)1589_storage)",
+            "contract": "L2ComptrollerV2Base",
+            "src": "src/abstracts/L2ComptrollerV2Base.sol:100"
+          },
+          {
+            "label": "burnAndClaimDetails",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(BurnAndClaimDetails)1584_storage))",
+            "contract": "L2ComptrollerV2Base",
+            "src": "src/abstracts/L2ComptrollerV2Base.sol:105"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "L2ComptrollerV2Base",
+            "src": "src/abstracts/L2ComptrollerV2Base.sol:449"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IPoolLogic)2912": {
+            "label": "contract IPoolLogic",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_struct(BurnAndClaimDetails)1584_storage))": {
+            "label": "mapping(address => mapping(address => struct L2ComptrollerV2Base.BurnAndClaimDetails))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(BurnAndClaimDetails)1584_storage)": {
+            "label": "mapping(address => struct L2ComptrollerV2Base.BurnAndClaimDetails)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_contract(IPoolLogic)2912,t_struct(BuyTokenDetails)1589_storage)": {
+            "label": "mapping(contract IPoolLogic => struct L2ComptrollerV2Base.BuyTokenDetails)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(BurnAndClaimDetails)1584_storage": {
+            "label": "struct L2ComptrollerV2Base.BurnAndClaimDetails",
+            "members": [
+              {
+                "label": "totalAmountBurned",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalAmountClaimed",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(BuyTokenDetails)1589_storage": {
+            "label": "struct L2ComptrollerV2Base.BuyTokenDetails",
+            "members": [
+              {
+                "label": "lastTokenToBuyPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxTokenPriceDrop",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

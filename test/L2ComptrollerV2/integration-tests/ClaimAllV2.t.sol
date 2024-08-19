@@ -478,14 +478,20 @@ contract ClaimAllV2 is SetupV2 {
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
+            abi.encodeWithSelector(L2ComptrollerV2Base.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
         );
 
         L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(POTATO_SWAP), 0, 0)
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
+                address(POTATO_SWAP),
+                0,
+                0
+            )
         );
 
         L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
@@ -522,14 +528,20 @@ contract ClaimAllV2 is SetupV2 {
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
+            abi.encodeWithSelector(L2ComptrollerV2Base.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
         );
 
         L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy, receiver: alice});
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
-            abi.encodeWithSelector(L2ComptrollerV2.ExceedingClaimableAmount.selector, alice, address(POTATO_SWAP), 0, 0)
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
+                address(POTATO_SWAP),
+                0,
+                0
+            )
         );
 
         L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy, receiver: alice});
