@@ -57,6 +57,7 @@ contract RedeemFromL1V2 is SetupV2 {
 
     // Events in L2Comptroller and L1Comptroller.
     event RequireErrorDuringRedemption(address indexed depositor, string reason);
+    event LowLevelErrorDuringRedemption(address indexed depositor, bytes reason);
 
     function setUp() public override {
         super.setUp();
@@ -785,6 +786,90 @@ contract RedeemFromL1V2 is SetupV2 {
             totalAmountBurntOnL1: 100e18,
             l1Depositor: alice,
             receiver: bob
+        });
+
+        vm.clearMockedCalls();
+    }
+
+    function test_Revert_WhenBuyTokenPriceLow_AfterTokenPriceIncreasePreviously() public {
+        vm.startPrank(address(L2DomainMessenger));
+
+        uint256 currentTokenPriceUSDy = USDy.tokenPrice();
+        uint256 currentTokenPriceUSDpy = USDpy.tokenPrice();
+        uint256 newTokenPriceUSDy = currentTokenPriceUSDy + ((currentTokenPriceUSDy * uint256(5)) / uint256(10000)); // +0.05% increase
+        uint256 newTokenPriceUSDpy = currentTokenPriceUSDpy + ((currentTokenPriceUSDpy * uint256(5)) / uint256(10000)); // +0.05% increase
+
+        // Mocking the token price call of `tokenToBuy` such that it returns a higher price than before.
+        vm.mockCall(address(USDy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPriceUSDy));
+        vm.mockCall(address(USDpy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPriceUSDpy));
+
+        L2ComptrollerV2Proxy.redeemFromL1({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        L2ComptrollerV2Proxy.redeemFromL1({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            totalAmountBurntOnL1: 100e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        currentTokenPriceUSDy = USDy.tokenPrice();
+        currentTokenPriceUSDpy = USDpy.tokenPrice();
+        newTokenPriceUSDy = currentTokenPriceUSDy - ((currentTokenPriceUSDy * uint256(100)) / uint256(10000)); // -1% decrease
+        newTokenPriceUSDpy = currentTokenPriceUSDpy - ((currentTokenPriceUSDpy * uint256(1100)) / uint256(10000)); // -11% decrease
+
+        (, uint256 maxTokenPriceDropUSDy) = L2ComptrollerV2Proxy.buyTokenDetails(USDy);
+        (, uint256 maxTokenPriceDropUSDpy) = L2ComptrollerV2Proxy.buyTokenDetails(USDpy);
+
+        // Mocking the token price call of `tokenToBuy` such that it returns a low price and beyond the limit.
+        vm.mockCall(address(USDy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPriceUSDy));
+
+        vm.expectEmit();
+
+        emit LowLevelErrorDuringRedemption(
+            alice,
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.PriceDropExceedsLimit.selector,
+                USDy,
+                currentTokenPriceUSDy - ((currentTokenPriceUSDy * maxTokenPriceDropUSDy) / 10_000),
+                newTokenPriceUSDy
+            )
+        );
+
+        L2ComptrollerV2Proxy.redeemFromL1({
+            tokenBurned: address(MTA_L1),
+            tokenToBuy: address(USDy),
+            totalAmountBurntOnL1: 200e18,
+            l1Depositor: alice,
+            receiver: alice
+        });
+
+        vm.mockCall(address(USDpy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPriceUSDpy));
+
+        vm.expectEmit();
+
+        emit LowLevelErrorDuringRedemption(
+            alice,
+            abi.encodeWithSelector(
+                L2ComptrollerV2Base.PriceDropExceedsLimit.selector,
+                USDpy,
+                currentTokenPriceUSDpy - ((currentTokenPriceUSDpy * maxTokenPriceDropUSDpy) / 10_000),
+                newTokenPriceUSDpy
+            )
+        );
+
+        L2ComptrollerV2Proxy.redeemFromL1({
+            tokenBurned: address(POTATO_SWAP),
+            tokenToBuy: address(USDpy),
+            totalAmountBurntOnL1: 200e18,
+            l1Depositor: alice,
+            receiver: alice
         });
 
         vm.clearMockedCalls();
