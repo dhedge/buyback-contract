@@ -90,7 +90,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -98,7 +97,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -112,77 +110,6 @@ contract RedeemFromL1V2 is SetupV2 {
             USDpy.balanceOf(alice),
             "Alice's USDpy balance incorrect"
         );
-        assertEq(
-            usdyComptrollerBuyTokenBalanceBefore - usdyExpectedBuyTokenAmount,
-            USDy.balanceOf(address(L2ComptrollerV2Proxy)),
-            "L2Comptroller's USDy balance incorrect"
-        );
-        assertEq(
-            usdpyComptrollerBuyTokenBalanceBefore - usdpyExpectedBuyTokenAmount,
-            USDpy.balanceOf(address(L2ComptrollerV2Proxy)),
-            "L2Comptroller's USDpy balance incorrect"
-        );
-
-        (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
-            alice,
-            address(MTA_L1)
-        );
-        (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
-            alice,
-            address(POTATO_SWAP)
-        );
-
-        assertEq(aliceTotalUSDyClaimed, 100e18, "Alice's USDy claimed amount incorrect");
-        assertEq(aliceTotalUSDyBurned, 100e18, "Alice's USDy burnt amount incorrect");
-        assertEq(aliceTotalUSDpyClaimed, 100e18, "Alice's USDpy claimed amount incorrect");
-        assertEq(aliceTotalUSDpyBurned, 100e18, "Alice's USDpy burnt amount incorrect");
-    }
-
-    function test_ShouldBeAbleToRedeemFromL1_WhenSenderIsNotReceiver() public {
-        uint256 usdyAliceBuyTokenBalanceBefore = USDy.balanceOf(alice);
-        uint256 usdpyAliceBuyTokenBalanceBefore = USDpy.balanceOf(alice);
-        uint256 usdyDummyReceiverBuyTokenBalanceBefore = USDy.balanceOf(dummyReceiver);
-        uint256 usdpyDummyReceiverBuyTokenBalanceBefore = USDpy.balanceOf(dummyReceiver);
-        uint256 usdyComptrollerBuyTokenBalanceBefore = USDy.balanceOf(address(L2ComptrollerV2Proxy));
-        uint256 usdpyComptrollerBuyTokenBalanceBefore = USDpy.balanceOf(address(L2ComptrollerV2Proxy));
-
-        // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
-        // So calculate the expected buy token amount for USDy and USDpy.
-        uint256 usdyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
-            USDy.tokenPrice();
-        uint256 usdpyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
-            USDpy.tokenPrice();
-
-        vm.startPrank(address(L2DomainMessenger));
-
-        L2ComptrollerV2Proxy.redeemFromL1({
-            tokenBurned: address(MTA_L1),
-            tokenToBuy: address(USDy),
-            totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
-            receiver: dummyReceiver
-        });
-
-        L2ComptrollerV2Proxy.redeemFromL1({
-            tokenBurned: address(POTATO_SWAP),
-            tokenToBuy: address(USDpy),
-            totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
-            receiver: dummyReceiver
-        });
-
-        assertEq(
-            usdyDummyReceiverBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount,
-            USDy.balanceOf(dummyReceiver),
-            "Dummy receiver's USDy balance incorrect"
-        );
-        assertEq(
-            usdpyDummyReceiverBuyTokenBalanceBefore + usdpyExpectedBuyTokenAmount,
-            USDpy.balanceOf(dummyReceiver),
-            "Dummy receiver's USDpy balance incorrect"
-        );
-        assertEq(usdyAliceBuyTokenBalanceBefore, USDy.balanceOf(alice), "Alice's USDy balance shouldn't change");
-        assertEq(usdpyAliceBuyTokenBalanceBefore, USDpy.balanceOf(alice), "Alice's USDpy balance shouldn't change");
         assertEq(
             usdyComptrollerBuyTokenBalanceBefore - usdyExpectedBuyTokenAmount,
             USDy.balanceOf(address(L2ComptrollerV2Proxy)),
@@ -228,7 +155,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -236,7 +162,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -250,7 +175,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -258,7 +182,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -317,7 +240,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -331,7 +253,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -365,7 +286,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -373,7 +293,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -432,7 +351,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -446,7 +364,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -480,7 +397,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -488,7 +404,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 150e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -561,7 +476,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
                     1e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -579,7 +493,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
                     1e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -597,7 +510,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
                     2e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -615,7 +527,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
                     2e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -641,7 +552,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
                     2e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -659,7 +569,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
                     2e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -677,7 +586,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(MTA_L1), // tokenBurned
                     address(USDy), // tokenToBuy
                     1e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -695,7 +603,6 @@ contract RedeemFromL1V2 is SetupV2 {
                     address(POTATO_SWAP), // tokenBurned
                     address(USDpy), // tokenToBuy
                     1e18, // totalAmountBurntOnL1
-                    alice, // l1Depositor
                     alice // receiver
                 )
             )
@@ -707,8 +614,8 @@ contract RedeemFromL1V2 is SetupV2 {
 
         // user calls claimAll
         changePrank(alice);
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy});
 
         // The 1e18 totalBurned transaction should have failed since 2e18 totalBurned transaction was replayed first.
         // There will be some rounding error to be taken care of.
@@ -764,7 +671,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: bob
         });
 
@@ -783,7 +689,6 @@ contract RedeemFromL1V2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: bob
         });
 

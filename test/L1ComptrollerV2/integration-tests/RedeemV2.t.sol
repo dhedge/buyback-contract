@@ -52,7 +52,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(MTA_L1), address(USDy), 100e18, alice, alice)
+                        (address(MTA_L1), address(USDy), 100e18, alice)
                     ),
                     1_920_000
                 )
@@ -67,7 +67,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(POTATO_SWAP), address(USDpy), 100e18, alice, alice)
+                        (address(POTATO_SWAP), address(USDpy), 100e18, alice)
                     ),
                     1_920_000
                 )
@@ -114,7 +114,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(MTA_L1), address(USDy), 100e18, alice, dummyReceiver)
+                        (address(MTA_L1), address(USDy), 100e18, dummyReceiver)
                     ),
                     1_920_000
                 )
@@ -129,7 +129,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(POTATO_SWAP), address(USDpy), 100e18, alice, dummyReceiver)
+                        (address(POTATO_SWAP), address(USDpy), 100e18, dummyReceiver)
                     ),
                     1_920_000
                 )
@@ -150,10 +150,10 @@ contract RedeemV2 is SetupV2 {
             potatoSwapAliceBalanceBefore - 100e18,
             "Alice's potato swap balance wrong after burn"
         );
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 100e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver, address(MTA_L1)), 100e18, "Burnt MTA amount not updated");
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 100e18, "Potato swap balance of burn address incorrect");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver, address(POTATO_SWAP)),
             100e18,
             "Burnt potato swap amount not updated"
         );
@@ -319,9 +319,9 @@ contract RedeemV2 is SetupV2 {
             "Wrong Alice's balance after burn"
         );
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 200e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -369,9 +369,9 @@ contract RedeemV2 is SetupV2 {
         );
         assertEq(POTATO_SWAP.balanceOf(bob), potatoSwapBobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 400e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver2, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(bob, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(dummyReceiver2, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -393,7 +393,7 @@ contract RedeemV2 is SetupV2 {
                 L1DomainMessenger.sendMessage,
                 (
                     address(L2ComptrollerV2Proxy),
-                    abi.encodeCall(L2ComptrollerV2Base.redeemFromL1, (address(MTA_L1), address(USDy), 0, alice, alice)),
+                    abi.encodeCall(L2ComptrollerV2Base.redeemFromL1, (address(MTA_L1), address(USDy), 0, alice)),
                     1_920_000
                 )
             )
@@ -407,7 +407,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(POTATO_SWAP), address(USDpy), 0, alice, alice)
+                        (address(POTATO_SWAP), address(USDpy), 0, alice)
                     ),
                     1_920_000
                 )
@@ -486,7 +486,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(MTA_L1), address(USDy), 100e18, alice, alice)
+                        (address(MTA_L1), address(USDy), 100e18, alice)
                     ),
                     1_920_000
                 )
@@ -501,7 +501,7 @@ contract RedeemV2 is SetupV2 {
                     address(L2ComptrollerV2Proxy),
                     abi.encodeCall(
                         L2ComptrollerV2Base.redeemFromL1,
-                        (address(POTATO_SWAP), address(USDpy), 100e18, alice, alice)
+                        (address(POTATO_SWAP), address(USDpy), 100e18, alice)
                     ),
                     1_920_000
                 )

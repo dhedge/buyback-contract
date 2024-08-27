@@ -84,6 +84,7 @@ abstract contract L1ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     ///      - Note that this function can be called with any `tokenToBuy` passed and it's not validated here.
     ///        This is safe as long as the total burnt amount is updated in the L2 contract.
     ///        That way, the user can claim whatever supported token they want on the L2 side.
+    ///      - Note that `receiver` should be an address which the user has access to on L2.
     /// @param tokenToBurn Address of the token to be burnt.
     /// @param tokenToBuy Address of the token to be claimed.
     /// @param burnTokenAmount Amount of `tokenToBurn` to be burnt.
@@ -98,13 +99,13 @@ abstract contract L1ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     ) public payable whenNotPaused whenL2ComptrollerSet {
         _burnToken(tokenToBurn, burnTokenAmount);
 
-        uint256 totalBurntAmount = burntAmountOf[msg.sender][tokenToBurn] += burnTokenAmount;
+        uint256 totalBurntAmount = burntAmountOf[receiver][tokenToBurn] += burnTokenAmount;
 
         // Send a cross chain message to `l2Comptroller` for releasing the buy tokens.
         _sendMessage(
             abi.encodeCall(
                 L2ComptrollerV2Base.redeemFromL1,
-                (tokenToBurn, tokenToBuy, totalBurntAmount, msg.sender, receiver)
+                (tokenToBurn, tokenToBuy, totalBurntAmount, receiver)
             ),
             additionalData
         );

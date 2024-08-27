@@ -51,7 +51,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -59,7 +58,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -75,9 +73,9 @@ contract ClaimAllV2 is SetupV2 {
         uint256 usdpyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
             USDpy.tokenPrice();
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy});
 
         assertEq(
             aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount,
@@ -143,7 +141,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -151,7 +148,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -167,9 +163,9 @@ contract ClaimAllV2 is SetupV2 {
         uint256 usdpyExpectedBuyTokenAmount = (100e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
             USDpy.tokenPrice();
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy});
 
         assertEq(
             aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount,
@@ -235,7 +231,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -249,7 +244,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -266,19 +260,9 @@ contract ClaimAllV2 is SetupV2 {
         deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
 
-        L2ComptrollerV2Proxy.claim({
-            tokenBurned: address(MTA_L1),
-            tokenToBuy: USDy,
-            burnTokenAmount: 70e18,
-            receiver: alice
-        });
+        L2ComptrollerV2Proxy.claim({tokenBurned: address(MTA_L1), tokenToBuy: USDy, burnTokenAmount: 70e18});
 
-        L2ComptrollerV2Proxy.claim({
-            tokenBurned: address(POTATO_SWAP),
-            tokenToBuy: USDpy,
-            burnTokenAmount: 70e18,
-            receiver: alice
-        });
+        L2ComptrollerV2Proxy.claim({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, burnTokenAmount: 70e18});
 
         // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
         // So calculate the expected buy token amount for USDy and USDpy.
@@ -287,9 +271,9 @@ contract ClaimAllV2 is SetupV2 {
         uint256 usdpyExpectedBuyTokenAmount2 = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(POTATO_SWAP))) /
             USDpy.tokenPrice();
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy});
 
         assertEq(
             aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount1 + usdyExpectedBuyTokenAmount2,
@@ -355,7 +339,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -369,7 +352,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -386,19 +368,9 @@ contract ClaimAllV2 is SetupV2 {
         deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
 
-        L2ComptrollerV2Proxy.claim({
-            tokenBurned: address(MTA_L1),
-            tokenToBuy: USDpy,
-            burnTokenAmount: 70e18,
-            receiver: alice
-        });
+        L2ComptrollerV2Proxy.claim({tokenBurned: address(MTA_L1), tokenToBuy: USDpy, burnTokenAmount: 70e18});
 
-        L2ComptrollerV2Proxy.claim({
-            tokenBurned: address(POTATO_SWAP),
-            tokenToBuy: USDy,
-            burnTokenAmount: 70e18,
-            receiver: alice
-        });
+        L2ComptrollerV2Proxy.claim({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy, burnTokenAmount: 70e18});
 
         // We have initiated a buyback for MTA and POTATO_SWAP in return for USDy and USDpy respectively.
         // So calculate the expected buy token amount for USDy and USDpy.
@@ -407,9 +379,9 @@ contract ClaimAllV2 is SetupV2 {
         uint256 usdpyExpectedBuyTokenAmount2 = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
             USDpy.tokenPrice();
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy});
 
         assertEq(
             aliceUSDyBuyTokenBalanceBefore + usdyExpectedBuyTokenAmount1 + usdyExpectedBuyTokenAmount2,
@@ -462,7 +434,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -470,7 +441,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -481,7 +451,7 @@ contract ClaimAllV2 is SetupV2 {
             abi.encodeWithSelector(L2ComptrollerV2Base.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
         );
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy});
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
@@ -494,7 +464,7 @@ contract ClaimAllV2 is SetupV2 {
             )
         );
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy});
     }
 
     function test_Revert_DifferentBuyToken_WhenAlreadyClaimedAll() public {
@@ -512,7 +482,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: address(USDy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -520,7 +489,6 @@ contract ClaimAllV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: address(USDpy),
             totalAmountBurntOnL1: 100e18,
-            l1Depositor: alice,
             receiver: alice
         });
 
@@ -531,7 +499,7 @@ contract ClaimAllV2 is SetupV2 {
             abi.encodeWithSelector(L2ComptrollerV2Base.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
         );
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDpy});
 
         // As Alice's cross chain buyback call was successful, she shouldn't be able to claim again.
         vm.expectRevert(
@@ -544,6 +512,16 @@ contract ClaimAllV2 is SetupV2 {
             )
         );
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDy});
+    }
+
+    function test_Revert_WhenNoTokensBurntOnL1() public {
+        vm.startPrank(alice);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(L2ComptrollerV2Base.ExceedingClaimableAmount.selector, alice, address(MTA_L1), 0, 0)
+        );
+
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy});
     }
 }
