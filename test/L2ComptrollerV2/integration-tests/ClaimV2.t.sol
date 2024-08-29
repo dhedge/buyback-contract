@@ -85,14 +85,14 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -118,9 +118,11 @@ contract ClaimV2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -197,7 +199,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDpy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         // Alice should be able to claim USDy instead of USDpy.
@@ -205,7 +207,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -231,9 +233,11 @@ contract ClaimV2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -306,14 +310,14 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -339,9 +343,11 @@ contract ClaimV2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -362,14 +368,14 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 30e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 30e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -395,9 +401,11 @@ contract ClaimV2 is SetupV2 {
 
         (aliceTotalUSDyBurned, aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (aliceTotalUSDpyBurned, aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -470,14 +478,14 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDpy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -503,9 +511,11 @@ contract ClaimV2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -526,14 +536,14 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDpy,
             burnTokenAmount: 30e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDy,
             burnTokenAmount: 30e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         assertEq(
@@ -559,9 +569,11 @@ contract ClaimV2 is SetupV2 {
 
         (aliceTotalUSDyBurned, aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (aliceTotalUSDpyBurned, aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -606,6 +618,7 @@ contract ClaimV2 is SetupV2 {
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
+                alice,
                 address(MTA_L1),
                 0,
                 100e18
@@ -616,12 +629,13 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
                 alice,
                 address(POTATO_SWAP),
                 0,
@@ -633,7 +647,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
     }
 
@@ -671,6 +685,7 @@ contract ClaimV2 is SetupV2 {
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
+                alice,
                 address(MTA_L1),
                 0,
                 100e18
@@ -681,12 +696,13 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDpy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
                 alice,
                 address(POTATO_SWAP),
                 0,
@@ -698,7 +714,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDy,
             burnTokenAmount: 100e18,
-            receiver: alice
+            l1Depositor: alice
         });
     }
 
@@ -756,6 +772,7 @@ contract ClaimV2 is SetupV2 {
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
+                alice,
                 address(MTA_L1),
                 100e18,
                 150e18
@@ -766,12 +783,13 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 150e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
                 alice,
                 address(POTATO_SWAP),
                 100e18,
@@ -783,7 +801,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 150e18,
-            receiver: alice
+            l1Depositor: alice
         });
     }
 
@@ -841,6 +859,7 @@ contract ClaimV2 is SetupV2 {
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
                 alice,
+                alice,
                 address(MTA_L1),
                 100e18,
                 150e18
@@ -851,12 +870,13 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDpy,
             burnTokenAmount: 150e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 L2ComptrollerV2Base.ExceedingClaimableAmount.selector,
+                alice,
                 alice,
                 address(POTATO_SWAP),
                 100e18,
@@ -868,7 +888,7 @@ contract ClaimV2 is SetupV2 {
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDy,
             burnTokenAmount: 150e18,
-            receiver: alice
+            l1Depositor: alice
         });
     }
 }

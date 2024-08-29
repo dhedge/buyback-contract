@@ -65,12 +65,12 @@ contract GetClaimableAmountV2 is SetupV2 {
 
         assertEq(
             usdyExpectedBuyTokenAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice, alice),
             "Alice's USDy claimable amount wrong"
         );
         assertEq(
             usdpyExpectedBuyTokenAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice, alice),
             "Alice's USDpy claimable amount wrong"
         );
     }
@@ -121,14 +121,14 @@ contract GetClaimableAmountV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 70e18,
-            receiver: alice
+            l1Depositor: alice
         });
 
         uint256 usdyExpectedClaimableAmount = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
@@ -138,12 +138,12 @@ contract GetClaimableAmountV2 is SetupV2 {
 
         assertEq(
             usdyExpectedClaimableAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice, alice),
             "Alice's USDy claimable amount wrong"
         );
         assertEq(
             usdpyExpectedClaimableAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice, alice),
             "Alice's USDpy claimable amount wrong"
         );
     }
@@ -190,18 +190,18 @@ contract GetClaimableAmountV2 is SetupV2 {
         deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, l1Depositor: alice});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, l1Depositor: alice});
 
         assertEq(
             0,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice, alice),
             "Alice's USDy claimable amount wrong"
         );
         assertEq(
             0,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice, alice),
             "Alice's USDpy claimable amount wrong"
         );
     }
@@ -243,7 +243,7 @@ contract GetClaimableAmountV2 is SetupV2 {
             receiver: dummyReceiver
         });
 
-        changePrank(alice);
+        changePrank(dummyReceiver);
 
         deal(address(USDy), address(L2ComptrollerV2Proxy), 1000e18);
         deal(address(USDpy), address(L2ComptrollerV2Proxy), 1000e18);
@@ -252,14 +252,14 @@ contract GetClaimableAmountV2 is SetupV2 {
             tokenBurned: address(MTA_L1),
             tokenToBuy: USDy,
             burnTokenAmount: 70e18,
-            receiver: dummyReceiver
+            l1Depositor: alice
         });
 
         L2ComptrollerV2Proxy.claim({
             tokenBurned: address(POTATO_SWAP),
             tokenToBuy: USDpy,
             burnTokenAmount: 70e18,
-            receiver: dummyReceiver
+            l1Depositor: alice
         });
 
         uint256 usdyExpectedClaimableAmount = (30e18 * L2ComptrollerV2Proxy.exchangePrices(address(MTA_L1))) /
@@ -269,27 +269,27 @@ contract GetClaimableAmountV2 is SetupV2 {
 
         assertEq(
             usdyExpectedClaimableAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice, dummyReceiver),
             "Alice's USDy claimable amount wrong"
         );
         assertEq(
             usdpyExpectedClaimableAmount,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice, dummyReceiver),
             "Alice's USDpy claimable amount wrong"
         );
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: dummyReceiver});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, l1Depositor: alice});
 
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: dummyReceiver});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, l1Depositor: alice});
 
         assertEq(
             0,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(MTA_L1), USDy, alice, dummyReceiver),
             "Alice's USDy claimable amount wrong"
         );
         assertEq(
             0,
-            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice),
+            L2ComptrollerV2Proxy.getClaimableAmount(address(POTATO_SWAP), USDpy, alice, dummyReceiver),
             "Alice's USDpy claimable amount wrong"
         );
     }
