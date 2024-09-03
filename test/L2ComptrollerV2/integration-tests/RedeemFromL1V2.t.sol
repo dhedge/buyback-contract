@@ -125,9 +125,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -196,10 +198,12 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            dummyReceiver,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            dummyReceiver,
             address(POTATO_SWAP)
         );
 
@@ -264,9 +268,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -337,9 +343,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -379,9 +387,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (aliceTotalUSDyBurned, aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (aliceTotalUSDpyBurned, aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -452,9 +462,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -494,9 +506,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (aliceTotalUSDyBurned, aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (aliceTotalUSDpyBurned, aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );
@@ -707,8 +721,8 @@ contract RedeemFromL1V2 is SetupV2 {
 
         // user calls claimAll
         changePrank(alice);
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, receiver: alice});
-        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, receiver: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(MTA_L1), tokenToBuy: USDy, l1Depositor: alice});
+        L2ComptrollerV2Proxy.claimAll({tokenBurned: address(POTATO_SWAP), tokenToBuy: USDpy, l1Depositor: alice});
 
         // The 1e18 totalBurned transaction should have failed since 2e18 totalBurned transaction was replayed first.
         // There will be some rounding error to be taken care of.
@@ -727,9 +741,11 @@ contract RedeemFromL1V2 is SetupV2 {
 
         (uint256 aliceTotalUSDyBurned, uint256 aliceTotalUSDyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
             alice,
+            alice,
             address(MTA_L1)
         );
         (uint256 aliceTotalUSDpyBurned, uint256 aliceTotalUSDpyClaimed) = L2ComptrollerV2Proxy.burnAndClaimDetails(
+            alice,
             alice,
             address(POTATO_SWAP)
         );

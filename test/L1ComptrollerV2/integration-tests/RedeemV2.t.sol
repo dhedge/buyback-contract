@@ -88,10 +88,14 @@ contract RedeemV2 is SetupV2 {
             potatoSwapAliceBalanceBefore - 100e18,
             "Alice's potato swap balance wrong after burn"
         );
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 100e18, "Burnt MTA amount not updated");
+        assertEq(
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(MTA_L1)),
+            100e18,
+            "Burnt MTA amount not updated"
+        );
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 100e18, "Potato swap balance of burn address incorrect");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(POTATO_SWAP)),
             100e18,
             "Burnt potato swap amount not updated"
         );
@@ -150,10 +154,14 @@ contract RedeemV2 is SetupV2 {
             potatoSwapAliceBalanceBefore - 100e18,
             "Alice's potato swap balance wrong after burn"
         );
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 100e18, "Burnt MTA amount not updated");
+        assertEq(
+            L1ComptrollerV2Proxy.burntAmountOf(alice, dummyReceiver, address(MTA_L1)),
+            100e18,
+            "Burnt MTA amount not updated"
+        );
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 100e18, "Potato swap balance of burn address incorrect");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, dummyReceiver, address(POTATO_SWAP)),
             100e18,
             "Burnt potato swap amount not updated"
         );
@@ -209,9 +217,13 @@ contract RedeemV2 is SetupV2 {
             "Wrong Alice's balance after burn"
         );
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 200e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(MTA_L1)),
+            200e18,
+            "Burnt MTA amount not updated"
+        );
+        assertEq(
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -259,9 +271,9 @@ contract RedeemV2 is SetupV2 {
         );
         assertEq(POTATO_SWAP.balanceOf(bob), potatoSwapBobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 400e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
+        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, bob, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(bob, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(bob, bob, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -319,9 +331,13 @@ contract RedeemV2 is SetupV2 {
             "Wrong Alice's balance after burn"
         );
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 200e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, dummyReceiver, address(MTA_L1)),
+            200e18,
+            "Burnt MTA amount not updated"
+        );
+        assertEq(
+            L1ComptrollerV2Proxy.burntAmountOf(alice, dummyReceiver, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -369,9 +385,13 @@ contract RedeemV2 is SetupV2 {
         );
         assertEq(POTATO_SWAP.balanceOf(bob), potatoSwapBobBalanceBefore - 200e18, "Wrong Bob's balance after burn");
         assertEq(POTATO_SWAP.balanceOf(BURN_ADDRESS), 400e18, "Potato swap balance of burn address incorrect");
-        assertEq(L1ComptrollerV2Proxy.burntAmountOf(bob, address(MTA_L1)), 200e18, "Burnt MTA amount not updated");
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(bob, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(bob, dummyReceiver2, address(MTA_L1)),
+            200e18,
+            "Burnt MTA amount not updated"
+        );
+        assertEq(
+            L1ComptrollerV2Proxy.burntAmountOf(bob, dummyReceiver2, address(POTATO_SWAP)),
             200e18,
             "Burnt potato swap amount not updated"
         );
@@ -436,12 +456,12 @@ contract RedeemV2 is SetupV2 {
             "Potato swap balance of Alice incorrect after call"
         );
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(MTA_L1)),
             0,
             "MTA burnt amount should not be updated"
         );
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(POTATO_SWAP)),
             0,
             "Potato swap burnt amount should not be updated"
         );
@@ -534,12 +554,12 @@ contract RedeemV2 is SetupV2 {
             "Potato swap balance of Alice incorrect after call"
         );
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(MTA_L1)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(MTA_L1)),
             100e18,
             "MTA burnt amount should be updated"
         );
         assertEq(
-            L1ComptrollerV2Proxy.burntAmountOf(alice, address(POTATO_SWAP)),
+            L1ComptrollerV2Proxy.burntAmountOf(alice, alice, address(POTATO_SWAP)),
             100e18,
             "Potato swap burnt amount should be updated"
         );

@@ -63,7 +63,8 @@ abstract contract L1ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     /// @dev We don't need to use order IDs as the difference of `totalAmount` (burnt) on L1
     ///      and `totalAmount` (claimed) on L2 gives us the amount of buy tokens tokens yet to be claimed.
     /// @dev The `totalAmount` for an address would/should NEVER decrease.
-    mapping(address depositor => mapping(address tokenToBurn => uint256 totalAmount)) public burntAmountOf;
+    mapping(address depositor => mapping(address receiver => mapping(address tokenToBurn => uint256 totalAmount)))
+        public burntAmountOf;
 
     /////////////////////////////////////////////
     //                Modifiers                //
@@ -98,7 +99,7 @@ abstract contract L1ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     ) public payable whenNotPaused whenL2ComptrollerSet {
         _burnToken(tokenToBurn, burnTokenAmount);
 
-        uint256 totalBurntAmount = burntAmountOf[msg.sender][tokenToBurn] += burnTokenAmount;
+        uint256 totalBurntAmount = burntAmountOf[msg.sender][receiver][tokenToBurn] += burnTokenAmount;
 
         // Send a cross chain message to `l2Comptroller` for releasing the buy tokens.
         _sendMessage(
