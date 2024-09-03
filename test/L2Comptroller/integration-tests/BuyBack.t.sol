@@ -189,6 +189,37 @@ contract BuyBack is Setup {
         L2ComptrollerProxy.buyBack(alice, 100e18);
     }
 
+    function test_Revert_WhenBuyTokenPriceLow_AfterTokenPriceIncreasePreviously() public {
+        vm.startPrank(alice);
+
+        // Approve the MTA tokens to the L2Comptroller for buyback.
+        IERC20Upgradeable(tokenToBurnL2).safeIncreaseAllowance(address(L2ComptrollerProxy), type(uint256).max);
+
+        uint256 currentTokenPrice = tokenToBuy.tokenPrice();
+        uint256 newTokenPrice = currentTokenPrice + ((currentTokenPrice * uint256(5)) / uint256(10000)); // +0.05% increase
+
+        // Mocking the token price call of `tokenToBuy` such that it returns a higher price than before.
+        vm.mockCall(address(tokenToBuy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPrice));
+
+        L2ComptrollerProxy.buyBack(alice, 100e18);
+
+        currentTokenPrice = tokenToBuy.tokenPrice();
+        newTokenPrice = currentTokenPrice - ((currentTokenPrice * uint256(11)) / uint256(10000)); // 0.11% deviation
+
+        // Mocking the token price call of `tokenToBuy` such that it returns a low price and beyond the limit.
+        vm.mockCall(address(tokenToBuy), abi.encodeWithSignature("tokenPrice()"), abi.encode(newTokenPrice));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                L2ComptrollerOPV1.PriceDropExceedsLimit.selector,
+                currentTokenPrice - ((currentTokenPrice * L2ComptrollerProxy.maxTokenPriceDrop()) / 10_000),
+                newTokenPrice
+            )
+        );
+
+        L2ComptrollerProxy.buyBack(alice, 100e18);
+    }
+
     function test_Revert_WhenInternalBuybackFunctionCalledByAExternalCaller() public {
         vm.expectRevert(abi.encodeWithSelector(L2ComptrollerOPV1.ExternalCallerNotAllowed.selector));
 

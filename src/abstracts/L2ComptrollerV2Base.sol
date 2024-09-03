@@ -280,7 +280,7 @@ abstract contract L2ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
 
         // Updating the buy token price for future checks.
         if (lastTokenToBuyPrice < tokenToBuyPrice) {
-            lastTokenToBuyPrice = tokenToBuyPrice;
+            buyTokenDetails[tokenToBuy].lastTokenToBuyPrice = tokenToBuyPrice;
 
             emit BuyTokenPriceUpdated(tokenToBuy, tokenToBuyPrice);
         }
