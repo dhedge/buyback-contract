@@ -1,0 +1,21 @@
+{
+    "admin": {
+        "address": "0xd7aE9C6B93E5fa0a3b8C3F697a787521Cd928a9F",
+        "txHash": "0x67046ab4affc4a3c77db641e575c8a7a8f056e39cd9c53b6c8dd4169c8013d92"
+    },
+    "proxies": [
+        {
+            "address": "0xa30ee837aE10Acb36fF75eA4a720E1fAa1BA2293",
+            "txHash": "0x291d8d9f8289052b2c56935b2381b1435c582276c8c3c719d32634555e360958",
+            "kind": "transparent",
+            "env": "staging"
+        }
+    ],
+    "impls": [
+        {
+            "address": "0x6A782ddB72FbfE20CE263C3cdA9cc4A427B25Eb5",
+            "txHash": "0x0fbde0a2bd0c91310c09cba8cfdb4907d03dfbb779ed09b14cce414f06647263",
+            "env": "staging"
+        }
+    ]
+}

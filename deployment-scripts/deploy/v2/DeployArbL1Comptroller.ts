@@ -5,6 +5,8 @@ task("deploy-arb-l1comptroller", "Deploys an upgradeable Arbitrum flavour L1Comp
   .addParam("owner", "The ultimate contract owner")
   .addParam("inbox", "The Arbitrum stack inbox address")
   .setAction(async (taskArgs, hre) => {
+    await hre.run("compile");
+    
     const signer = (await ethers.getSigners())[0];
     console.log("Deployer: ", signer.address);
 

@@ -1,0 +1,23 @@
+{
+    "admin": {
+        "address": "0xF1153533986a4Db948e899c881824c7C4d3678F5",
+        "txHash": "0x96b6435c0fc836f64cf9054b586169263647721f75737273ef2267c3c70d923b"
+    },
+    "proxies": [
+        {
+            "address": "0x53750692bB134C7de46f174d1CCB96E0c2270096",
+            "txHash": "0xdcbc5a0b4cb4b8503d11434197d9e21bc540891f1755a822de05ac44ed8ccfc5",
+            "kind": "transparent",
+            "comptrollerType": "Arbitrum",
+            "env": "staging"
+        }
+    ],
+    "impls": [
+        {
+            "address": "0x97B0c933D896C8a6f5A00c91cc6dca374b5fb59c",
+            "txHash": "0x0edf02809e3f3e16749bacb7eceb3318267c37ab22e80344e30a36d54e395ae1",
+            "comptrollerType": "Arbitrum",
+            "env": "staging"
+        }
+    ]
+}
