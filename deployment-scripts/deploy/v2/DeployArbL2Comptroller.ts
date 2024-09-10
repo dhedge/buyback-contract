@@ -4,6 +4,8 @@ import { tryVerify } from "../../misc/Helpers";
 task("deploy-arb-l2comptroller", "Deploys an upgradeable Arbitrum flavour L2Comptroller contract")
   .addParam("owner", "The ultimate contract owner")
   .setAction(async (taskArgs, hre) => {
+    await hre.run("compile");
+    
     const signer = (await ethers.getSigners())[0];
     console.log("Deployer: ", signer.address);
 
