@@ -9,7 +9,16 @@
             "txHash": "0xdcbc5a0b4cb4b8503d11434197d9e21bc540891f1755a822de05ac44ed8ccfc5",
             "kind": "transparent",
             "comptrollerType": "Arbitrum",
+            "l2Network": "Arbitrum",
             "env": "staging"
+        },
+        {
+            "address": "0xd4880cFf579889cF7aEd85CF0202003420744f2C",
+            "txHash": "0x3a65c6384c2c7247afa07dd8e5ff90abb93d54be8cd0b2020039479d756aa043",
+            "kind": "transparent",
+            "comptrollerType": "OP",
+            "l2Network": "Base",
+            "env": "production"
         }
     ],
     "impls": [
@@ -17,7 +26,15 @@
             "address": "0x97B0c933D896C8a6f5A00c91cc6dca374b5fb59c",
             "txHash": "0x0edf02809e3f3e16749bacb7eceb3318267c37ab22e80344e30a36d54e395ae1",
             "comptrollerType": "Arbitrum",
+            "l2Network": "Arbitrum",
             "env": "staging"
+        },
+        {
+            "address": "0x21D69F588e5D204961F24DF8E7373D4E760c5D46",
+            "txHash": "0x7c8370a3303f70961870ec6cdfe86f83bdd49b0f13cc7cdd2aaa41599d6978c4",
+            "comptrollerType": "OP",
+            "l2Network": "Base",
+            "env": "production"
         }
     ]
 }

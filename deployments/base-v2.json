@@ -1,0 +1,21 @@
+{
+    "admin": {
+        "address": "0x503Cc1C1A410711E38a6083A443E7e20f02EaAdf",
+        "txHash": "0x3dab741f52dbd714e770b3d5b1241cc34adfe74d4eef2459aba1edcc01fd82da"
+    },
+    "proxies": [
+        {
+            "address": "0xB14F7Aff0ab1EAc0E780F2184f0668dDf450a879",
+            "txHash": "0xd460f4ba41d27e0086419dc08b326779660539f9dcdab3799136efd08d42c31f",
+            "kind": "transparent",
+            "env": "prod"
+        }
+    ],
+    "impls": [
+        {
+            "address": "0xb66682066B1c555f72531BBbf90bdC16c432dfFc",
+            "txHash": "0xb40bfb07580be6406846832aff74591e49666b7d41a2b705094bb7fdb37851a1",
+            "env": "prod"
+        }
+    ]
+}

@@ -9,6 +9,8 @@ import { HardhatUserConfig } from "hardhat/config";
 
 import "./deployment-scripts/deploy/v2/DeployArbL1Comptroller";
 import "./deployment-scripts/deploy/v2/DeployArbL2Comptroller";
+import "./deployment-scripts/deploy/v2/DeployOPL1Comptroller";
+import "./deployment-scripts/deploy/v2/DeployOPL2Comptroller";
 import "./deployment-scripts/tasks/L1Handover";
 import "./deployment-scripts/tasks/L2Handover";
 import "./deployment-scripts/tasks/CheckL1Comptroller";
@@ -52,6 +54,11 @@ const config: HardhatUserConfig = {
             url: process.env.ARBITRUM_RPC_URL || "https://arbitrum.llamarpc.com",
             accounts: [process.env.ARBITRUM_PRIVATE_KEY!]
         },
+        base:{
+            chainId: 8453,
+            url: process.env.BASE_RPC_URL || "https://base.llamarpc.com",
+            accounts: [process.env.BASE_PRIVATE_KEY!]
+        },
         sepolia: {
             chainId: 11155111,
             url: process.env.ETHEREUM_SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
@@ -70,7 +77,8 @@ const config: HardhatUserConfig = {
             arbitrumOne: process.env.ARBISCAN_API_KEY!,
             sepolia: process.env.ETHERSCAN_API_KEY!,
             optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
-            arbitrumSepolia: process.env.ARBISCAN_API_KEY!
+            arbitrumSepolia: process.env.ARBISCAN_API_KEY!,
+            base: process.env.BASESCAN_API_KEY!
         },
         customChains: [
             {
@@ -79,6 +87,14 @@ const config: HardhatUserConfig = {
                 urls: {
                     apiURL: "https://api-sepolia.arbiscan.io/api",
                     browserURL: "https://sepolia.arbiscan.io/",
+                }
+            },
+            {
+                network: "base",
+                chainId: 8453,
+                urls: {
+                    apiURL: "https://api.basescan.org/api",
+                    browserURL: "https://basescan.org/",
                 }
             }
         ]
