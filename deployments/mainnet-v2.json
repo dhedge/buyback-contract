@@ -1,23 +1,23 @@
 {
     "admin": {
-        "address": "0xF1153533986a4Db948e899c881824c7C4d3678F5",
-        "txHash": "0x96b6435c0fc836f64cf9054b586169263647721f75737273ef2267c3c70d923b"
+        "address": "0xdd2387B6a5A616B1bCb04ac2acB0C3aabB3dA5aE",
+        "txHash": "0xec0cac4da8c651a86eb95426d185c70228c95e78ac89891b847d9dd1f2ddb04d"
     },
     "proxies": [
         {
-            "address": "0x53750692bB134C7de46f174d1CCB96E0c2270096",
-            "txHash": "0xdcbc5a0b4cb4b8503d11434197d9e21bc540891f1755a822de05ac44ed8ccfc5",
+            "address": "0x984DB849B012aa843612D3e32c026d9Ff066B9CA",
+            "txHash": "0xec0cac4da8c651a86eb95426d185c70228c95e78ac89891b847d9dd1f2ddb04d",
             "kind": "transparent",
             "comptrollerType": "Arbitrum",
-            "env": "staging"
+            "env": "production"
         }
     ],
     "impls": [
         {
-            "address": "0x97B0c933D896C8a6f5A00c91cc6dca374b5fb59c",
-            "txHash": "0x0edf02809e3f3e16749bacb7eceb3318267c37ab22e80344e30a36d54e395ae1",
+            "address": "0x7E777208e41B0677e1493b7c60747D012c7700D0",
+            "txHash": "0xf01f41839e242cd93da1cd782a8c928056720cc35aee117725d333ef4c7dab25",
             "comptrollerType": "Arbitrum",
-            "env": "staging"
+            "env": "production"
         }
     ]
 }
