@@ -1,20 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
-import "hardhat-preprocessor";
-import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-foundry";
+import "@nomicfoundation/hardhat-verify";
 import "@openzeppelin/hardhat-upgrades";
-import "@openzeppelin/hardhat-defender";
 import { HardhatUserConfig } from "hardhat/config";
-
-import "./deployment-scripts/deploy/v2/DeployArbL1Comptroller";
-import "./deployment-scripts/deploy/v2/DeployArbL2Comptroller";
-import "./deployment-scripts/tasks/L1Handover";
-import "./deployment-scripts/tasks/L2Handover";
-import "./deployment-scripts/tasks/CheckL1Comptroller";
-import "./deployment-scripts/tasks/CheckL2Comptroller";
-import "./deployment-scripts/tasks/L1Upgrade";
-import "./deployment-scripts/tasks/L2Upgrade";
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -47,46 +37,15 @@ const config: HardhatUserConfig = {
                 "https://eth.llamarpc.com",
             accounts: [process.env.ETHEREUM_PRIVATE_KEY!]
         },
-        arbitrumOne:{
+        arbitrum: {
             chainId: 42161,
             url: process.env.ARBITRUM_RPC_URL || "https://arbitrum.llamarpc.com",
             accounts: [process.env.ARBITRUM_PRIVATE_KEY!]
         },
-        sepolia: {
-            chainId: 11155111,
-            url: process.env.ETHEREUM_SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
-            accounts: [process.env.TESTNET_PRIVATE_KEY!],
-        },
-        arbitrumSepolia: {
-            chainId: 421614,
-            url: process.env.ARBITRUM_SEPOLIA_RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc",
-            accounts: [process.env.TESTNET_PRIVATE_KEY!],
-        }
     },
     etherscan: {
-        // https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
-        apiKey: {
-            mainnet: process.env.ETHERSCAN_API_KEY!,
-            arbitrumOne: process.env.ARBISCAN_API_KEY!,
-            sepolia: process.env.ETHERSCAN_API_KEY!,
-            optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
-            arbitrumSepolia: process.env.ARBISCAN_API_KEY!
-        },
-        customChains: [
-            {
-                network: "arbitrumSepolia",
-                chainId: 421614,
-                urls: {
-                    apiURL: "https://api-sepolia.arbiscan.io/api",
-                    browserURL: "https://sepolia.arbiscan.io/",
-                }
-            }
-        ]
+        apiKey: process.env.ETHERSCAN_API_KEY,
     },
-    defender: {
-        apiKey: process.env.DEFENDER_API_KEY!,
-        apiSecret: process.env.DEFENDER_SECRET_KEY!
-    }
 };
 
 export default config;

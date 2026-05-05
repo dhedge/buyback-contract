@@ -66,10 +66,10 @@ To run specific tests (integration/fuzz), use the following commands:
 
 For integration tests
 ```shell
-$ npm run tests:integration
+$ pnpm tests:integration
 ```
 
 For fuzz tests
 ```shell
-$ npm run tests:fuzz
+$ pnpm tests:fuzz
 ```
