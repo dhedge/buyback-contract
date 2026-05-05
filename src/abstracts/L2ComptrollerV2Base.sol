@@ -46,6 +46,9 @@ abstract contract L2ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     event L1ComptrollerSet(address newL1Comptroller);
     event BuyTokenPriceUpdated(IPoolLogic buyToken, uint256 updatedBuyTokenPrice);
     event ModifiedMaxTokenPriceDrop(IPoolLogic buyToken, uint256 newMaxTokenPriceDrop);
+    event ExchangePriceSet(address tokenToBurn, uint256 exchangePrice);
+    event BuyTokenAdded(IPoolLogic tokenToBuy, uint256 maxTokenPriceDrop);
+    event BuyTokenRemoved(IPoolLogic tokenToBuy);
     event EmergencyWithdrawal(address indexed token, uint256 amount);
     event RequireErrorDuringRedemption(address indexed depositor, string reason);
     event AssertionErrorDuringRedemption(address indexed depositor, uint256 errorCode);
@@ -387,6 +390,8 @@ abstract contract L2ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
     /// @param burnTokenSetting `BurnTokenSettings` struct.
     function setExchangePrices(BurnTokenSettings memory burnTokenSetting) public onlyOwner {
         exchangePrices[burnTokenSetting.tokenToBurn] = burnTokenSetting.exchangePrice;
+
+        emit ExchangePriceSet(burnTokenSetting.tokenToBurn, burnTokenSetting.exchangePrice);
     }
 
     /// @notice Function to add a `tokenToBuy` token.
@@ -400,12 +405,16 @@ abstract contract L2ComptrollerV2Base is OwnableUpgradeable, PausableUpgradeable
             lastTokenToBuyPrice: tokenPrice,
             maxTokenPriceDrop: buyTokenSetting.maxTokenPriceDrop
         });
+
+        emit BuyTokenAdded(buyTokenSetting.tokenToBuy, buyTokenSetting.maxTokenPriceDrop);
     }
 
     /// @notice Function to remove a `tokenToBuy` token.
     /// @param tokenToBuy Address of the token to be removed.
     function removeBuyToken(IPoolLogic tokenToBuy) public onlyOwner {
         delete buyTokenDetails[tokenToBuy];
+
+        emit BuyTokenRemoved(tokenToBuy);
     }
 
     /// @notice Function to set the L1 comptroller address of the comptroller deployed on Ethereum.

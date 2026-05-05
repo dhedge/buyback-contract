@@ -5,13 +5,6 @@ libs = ['lib']
 verbosity = 2
 auto_detect_solc = true
 
-[profile.deploy]
-ffi = true
-ast = true
-build_info = true
-extra_output = ["storageLayout"]
-fs_permissions = [{ access = "read", path = "./out"}]
-
 [fuzz]
 runs = 1_000
 fail_on_revert = true
@@ -21,12 +14,7 @@ ethereum = "${ETHEREUM_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 arbitrum = "${ARBITRUM_RPC_URL}"
 
-[etherscan]
-ethereum = { key = "${ETHERSCAN_API_KEY}" }
-optimism = { key = "${ETHERSCAN_API_KEY}" }
-arbitrum = { key = "${ETHERSCAN_API_KEY}" }
-
-[doc]
-title = "MTA Buyback and Burn Contract"
+[lint]
+lint_on_build = false
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
