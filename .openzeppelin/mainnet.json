@@ -24,6 +24,11 @@
       "address": "0x53750692bB134C7de46f174d1CCB96E0c2270096",
       "txHash": "0xdcbc5a0b4cb4b8503d11434197d9e21bc540891f1755a822de05ac44ed8ccfc5",
       "kind": "transparent"
+    },
+    {
+      "address": "0xc87E1c912a346Db265616De90c95232D09A7F692",
+      "txHash": "0x1f5fe25eebf6d22cc9644bbb4970f77f519154ac1b3e6f4c8ce3fdcd73aefc2f",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -777,7 +782,11 @@
             "numberOfBytes": "1"
           }
         }
-      }
+      },
+      "allAddresses": [
+        "0x97B0c933D896C8a6f5A00c91cc6dca374b5fb59c",
+        "0xf9060C6fCcfEf9Ef5CB8f009702D9260Fb21457E"
+      ]
     }
   }
 }
